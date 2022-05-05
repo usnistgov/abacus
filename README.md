@@ -4,7 +4,7 @@ This R Shiny application is the result of a collaboration between CSD and SED. A
 
 ## Using Abacus Locally
 
-The easiest way to run and use Abacus is by first installing Docker (https://docs.docker.com/get-docker/).
+The easiest and most consistent way to run and use Abacus locally is by first installing Docker (https://docs.docker.com/get-docker/).
 
 Once Docker is installed, download the Abacus repository (at github.com/usnistgov/abacus, click 'Code' and then 'Download ZIP'), and navigate your terminal to the main directory of the project (the same level as Dockerfile). Then, run the following command to build the image:
 ```
