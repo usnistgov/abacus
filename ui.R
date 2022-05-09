@@ -10,9 +10,9 @@ options(java.parameters = "-Xss2560k")
 shinyUI(fluidPage(
   
   HTML('
-    <link rel="stylesheet" href="https://pages.nist.gov/nist-header-footer/css/nist-combined.css">
-    <script src="https://pages.nist.gov/nist-header-footer/js/jquery-1.9.0.min.js" type="text/javascript" defer="defer"></script>
-    <script src="https://pages.nist.gov/nist-header-footer/js/nist-header-footer.js" type="text/javascript" defer="defer"></script>
+    <link rel="stylesheet" href="css/nist-combined.css">
+    <script src="js/jquery-1.9.0.min.js" type="text/javascript" defer="defer"></script>
+    <script src="js/nist-header-footer.js" type="text/javascript" defer="defer"></script>
     <html class="nist-footer-bottom">
     '),
   
