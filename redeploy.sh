@@ -2,7 +2,7 @@
 
 set -e
 
-rm master.zip
+rm main.zip
 rm -r abacus-main
 
 wget https://github.com/usnistgov/abacus/archive/refs/heads/main.zip
