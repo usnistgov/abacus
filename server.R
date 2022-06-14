@@ -3,7 +3,7 @@ library(shiny)
 library(shinycssloaders)
 library('xlsx')
 source("./Toman2019-ExpDesignAug14.R")
- 
+
 shinyServer(function(input, output,session) {
   
   
@@ -869,6 +869,7 @@ shinyServer(function(input, output,session) {
       input$choice
     )
     if (choice()==1){
+      
       ###NS==1
       if(N_tables==1){
         
@@ -892,7 +893,7 @@ shinyServer(function(input, output,session) {
           
         })
         
-        ####merge sample data talbes
+        ####merge sample data tables
         
         sampledata<-reactive({
           
@@ -956,17 +957,22 @@ shinyServer(function(input, output,session) {
           if(standard()==1){
             return(c(rep(input$u_mid,nfile)))
           }else{
-            return(c(rep(1,nfile)))
+            return(c(rep(0.000015,nfile)))
             
           }
           
         })
         
-        umads<-reactive(
+        umads<-reactive({
           
-          return(c(rep(input$u_mad,nfile)))
+          if(standard()==1){
+            return(c(rep(input$u_mad,nfile)))
+          }else{
+            return(c(rep(0.000015,nfile)))
+            
+          }
           
-        )
+        })
         
         
         ####
@@ -1001,17 +1007,27 @@ shinyServer(function(input, output,session) {
             caldata()$mid
           }else{
             
-            caldata()$mad/caldata()$mad
+            return(c(rep(caldata()$mad/caldata()$mad,NR)))
             
           }
         )
         
         madsm<-reactive(
-          caldata()$mad
+          
+          if (standard()==1){
+            caldata()$mad
+          }else{
+            return(c(rep(caldata()$mad,NR)))
+          }
         )
         
         wsol<-reactive(
+          if (standard()==1){
           caldata()$wsol
+          }else {
+            
+            return(c(rep(caldata()$wsol,NR)))
+          }
         )
         
         
@@ -1074,8 +1090,16 @@ shinyServer(function(input, output,session) {
         
         mdi<-reactive(
           
-          sampledata()$mdi
+          if (standard()==1){
           
+          return(sampledata()$mdi)
+            
+          }else {
+            return(c(rep(sampledata()$mdi,NR)))
+            
+          } 
+            
+            
         )
         
         
@@ -1085,7 +1109,7 @@ shinyServer(function(input, output,session) {
           if(standard()==1){
             sampledata()$mids
           }else{
-            sampledata()$mdi/sampledata()$mdi
+            return(c(rep(sampledata()$mdi/sampledata()$mdi,NR)))
           }
           
         )
@@ -1099,17 +1123,44 @@ shinyServer(function(input, output,session) {
         
         
         sol<-reactive({
-          rep(1:N,NR)
+          
+          if(standard()==1){
+          return(rep(1:N,NR))
+          }else {
+            
+            return(rep(1:(N*NR)))
+          }
+            
         })
         
         sampl<-reactive({
-          rep(1:M,NR)
           
+          if(standard()==1){
+          rep(1:M,NR)
+          }else {
+            return(rep(1:(M*NR)))
+          }
         })   
         
-        
+        NF<-reactive({
+          if(standard()==1){
+            return(N)
+          }else {
+            return(N*NR)
+          }
+        })
+
+        MF<-reactive({
+          if(standard()==1){
+            return(M)
+          }else {
+            return(M*MR)
+          }
+        })
         #####
         
+        
+
         linedata = list(
           midsm=midsm(),
           madsm=madsm(),
@@ -1123,12 +1174,11 @@ shinyServer(function(input, output,session) {
           wadm= wadm(),
           uwad=uwad(),
           NWS=NWS()+1,
-          N=N,
-          M=M,
+          N=NF(),
+          M=MF(),
           MT=MT(),
           NT=NT(),
           sol=sol(),
-          NR=NR,
           sampl=sampl()
         )
         
@@ -1207,9 +1257,9 @@ shinyServer(function(input, output,session) {
           
           lineout<-bugs(data=linedata,
                         inits=lineinits,
-                        parameters=c("a","b","wd","wac","mean","vyp","vsp","mult","vip","xnewp","predm"),   
+                        parameters=c("a","b","wd","wac","wdm","mean","vyp","vsp","mult","vip","xnewp","predm"),   
                         model.file=linemodel,
-                        n.iter = input$niters, n.burnin = input$nburnin, n.thin = 10,n.chains = 1)#,debug=T)    
+                        n.iter = input$niters, n.burnin = input$nburnin, n.thin = 10,n.chains = 1)#debug=T)    
         })
         
         ######
@@ -1245,7 +1295,15 @@ shinyServer(function(input, output,session) {
         
         outwac=lineout$mean$wac
         eta<-lineout$sd$wac/lineout$mean$wac
-        lwac<-rep(outwac,NR)
+        
+        if(standard()==1){
+          lwac<-rep(outwac,NR)
+        }else {
+          lwac<-rep(outwac,1)
+        }
+        
+        
+      
         
         
         ############ calculates the rsq
@@ -1612,19 +1670,24 @@ shinyServer(function(input, output,session) {
               return(c(rep(input$u_mid,nfile)))
             }else {
               nfile<<-nrow(input$calfile)
-              return(c(rep(1,nfile)))
+              return(c(rep(0.000015,nfile)))
             }
             
             
           }
         })
         
-        umads<<-reactive(
+       
+        umads<-reactive({
           
-          return(c(rep(input$u_mad,nfile)))
+          if(standard()==1){
+            return(c(rep(input$u_mad,nfile)))
+          }else{
+            return(c(rep(0.000015,nfile)))
+            
+          }
           
-        )
-        
+        })
         
         ####
         
@@ -2984,30 +3047,26 @@ shinyServer(function(input, output,session) {
         
         umids<-reactive({
           
-          if (is.null(input$calfile))
-            return()
-          else
-          {
-            
-            if (standard()==1){
-              
-              return(input$u_mid)
-            }else {
-              
-              return(1)
-            }
-            
+          if(standard()==1){
+            return(c(rep(input$u_mid,nfile)))
+          }else{
+            return(c(rep(0.000015,nfile)))
             
           }
+          
         })
         
        
-        umads<-reactive(
-
-          return(input$u_mad)
-
-        )
-        
+        umads<-reactive({
+          
+          if(standard()==1){
+            return(c(rep(input$u_mad,nfile)))
+          }else{
+            return(c(rep(0.000015,nfile)))
+            
+          }
+          
+        })
         
         ####
         
@@ -3037,21 +3096,32 @@ shinyServer(function(input, output,session) {
         
         
         midsm<-reactive(
-          
-          if(standard()==1){
-          return(caldata()$mid)
+          if (standard()==1){
+            return(c(rep(caldata()$mid,NR)))
           }else{
-            return(caldata()$mad/caldata()$mad)
+            
+            return(c(rep(caldata()$mad/caldata()$mad,NR)))
+            
           }
         )
+        
         madsm<-reactive(
-          caldata()$mad
+          
+          if (standard()==1){
+            caldata()$mad
+          }else{
+            return(c(rep(caldata()$mad,NR)))
+          }
         )
         
         wsol<-reactive(
-          caldata()$wsol
+          if (standard()==1){
+            caldata()$wsol
+          }else {
+            
+            return(c(rep(caldata()$wsol,NR)))
+          }
         )
-        
         
         rac<- reactive({
           
@@ -3112,20 +3182,28 @@ shinyServer(function(input, output,session) {
         
         mdi<-reactive(
           
-          sampledata()$mdi
+          if (standard()==1){
+            
+            return(sampledata()$mdi)
+            
+          }else {
+            return(c(rep(sampledata()$mdi,NR)))
+            
+          } 
+        )
+        
+        
+        midsi<-reactive(
+          
+          if(standard()==1){
+            sampledata()$mids
+          }else{
+            return(c(rep(sampledata()$mdi/sampledata()$mdi,NR)))
+          }
           
         )
         
-        midsi<<-reactive(
-          
-          if(standard()==1){
-            return(sampledata()$mids)
-          }else{
-            
-            return(sampledata()$mdi/sampledata()$mdi)
-            
-          }
-        )
+        
         
         MT<-reactive(
           
@@ -3136,14 +3214,40 @@ shinyServer(function(input, output,session) {
         
         
         sol<-reactive({
-          rep(1:N,NR)
+          
+          if(standard()==1){
+            return(rep(1:N,NR))
+          }else {
+            
+            return(rep(1:(N*NR)))
+          }
+          
         })
         
-        sampl<-reactive({
-          rep(1:M,NR)
-          
-        })   
         
+        sampl<-reactive({
+          
+          if(standard()==1){
+            rep(1:M,NR)
+          }else {
+            return(rep(1:(M*NR)))
+          }
+        })   
+        NF<-reactive({
+          if(standard()==1){
+            return(N)
+          }else {
+            return(N*NR)
+          }
+        })
+        
+        MF<-reactive({
+          if(standard()==1){
+            return(M)
+          }else {
+            return(M*MR)
+          }
+        })
         
         #####
         
@@ -3160,13 +3264,12 @@ shinyServer(function(input, output,session) {
           wadm= wadm(),
           uwad=uwad(),
           NWS=NWS()+1,
-          N=N,
-          M=M,
+          N=NF(),
+          M=MF(),
           MT=MT(),
           NT=NT(),
           sol=sol(),
-          NR=NR,
-          sampl=sampl()
+               sampl=sampl()
         )
         
         
@@ -3286,9 +3389,12 @@ shinyServer(function(input, output,session) {
         wacm=lineout$mean$wacm #avarage of the wac
         outwac=lineout$mean$wac 
         eta<-lineout$sd$wac/lineout$mean$wac
-        lwac<-rep(outwac,NR)
-        
-        
+       
+        if(standard()==1){
+          lwac<-rep(outwac,NR)
+        }else {
+          lwac<-rep(outwac,1)
+        }
         ############ calculates the rsq
         ybar<-outmean
         sst<-sum((rac()-mean(rac()))^2)
@@ -6366,6 +6472,11 @@ shinyServer(function(input, output,session) {
         
       }
       
+      output$nWS<-renderUI({
+        
+        tableOutput("NWS")
+      })
+      
       output$caltables1 <- renderUI({
         table_output_list <- lapply(1:N_tables1, function(i) {
           tableOutput(paste0("table_name", i))
@@ -6505,6 +6616,9 @@ shinyServer(function(input, output,session) {
       file.copy("cal_template.xlsx",file)
     }
   )
+  
+  
+  
   
   ### This function creates the samples table template
   
@@ -6779,18 +6893,23 @@ shinyServer(function(input, output,session) {
           
           if (standard1()==1){
             
-            return(input$u_mid1)
+            return(c(rep(input$u_mid1,nfile)))
           }else{
             
-            return(1)
+            return(c(rep(0.000015,nfile)))
           }
         })
         
-        umads<-reactive(
+        umads<-reactive({
           
-          return(input$u_mad1)
+          if(standard1()==1){
+            return(c(rep(input$u_mad1,nfile)))
+          }else{
+            return(c(rep(0.000015,nfile)))
+            
+          }
           
-        )
+        })
         
         
         ####
@@ -6819,25 +6938,34 @@ shinyServer(function(input, output,session) {
         
         
         
-        midsm<<-reactive({
-          
-          if(standard1()==1){
-            return(caldata()$mid)
-            
+        
+        midsm<-reactive(
+          if (standard1()==1){
+            caldata()$mid
           }else{
             
-            return(caldata()$mad/caldata()$mad)
+            return(c(rep(caldata()$mad/caldata()$mad,NR)))
+            
           }
-        })
+        )
         
         madsm<-reactive(
-          caldata()$mad
+          
+          if (standard1()==1){
+            caldata()$mad
+          }else{
+            return(c(rep(caldata()$mad,NR)))
+          }
         )
         
         wsol<-reactive(
-          caldata()$wsol
+          if (standard1()==1){
+            caldata()$wsol
+          }else {
+            
+            return(c(rep(caldata()$wsol,NR)))
+          }
         )
-        
         
         rac<- reactive({
           
@@ -6901,20 +7029,25 @@ shinyServer(function(input, output,session) {
         
         mdi<-reactive(
           
-          sampledata()$mdi
-          
+          if (standard1()==1){
+            
+            return(sampledata()$mdi)
+            
+          }else {
+            return(c(rep(sampledata()$mdi,NR)))
+            
+          } 
         )
         
         ####standard
         midsi<-reactive(
           
           if(standard1()==1){
-            return(sampledata()$mids)
+            sampledata()$mids
           }else{
-            
-            return(sampledata()$mdi/sampledata()$mdi)
-            
+            return(c(rep(sampledata()$mdi/sampledata()$mdi,NR)))
           }
+          
         )
         
         MT<-reactive(
@@ -6926,14 +7059,40 @@ shinyServer(function(input, output,session) {
         
         
         sol<-reactive({
-          rep(1:N,NR)
+          
+          if(standard1()==1){
+            return(rep(1:N,NR))
+          }else {
+            
+            return(rep(1:(N*NR)))
+          }
+          
         })
         
         sampl<-reactive({
-          rep(1:M,NR)
           
+          if(standard1()==1){
+            rep(1:M,NR)
+          }else {
+            return(rep(1:(M*NR)))
+          }
         })   
         
+        NF<-reactive({
+          if(standard1()==1){
+            return(N)
+          }else {
+            return(N*NR)
+          }
+        })
+        
+        MF<-reactive({
+          if(standard1()==1){
+            return(M)
+          }else {
+            return(M*MR)
+          }
+        })
         
         #####
         
@@ -6950,12 +7109,11 @@ shinyServer(function(input, output,session) {
           wadm= wadm(),
           uwad=uwad(),
           NWS=NWS()+1,
-          N=N,
-          M=M,
+          N=NF(),
+          M=MF(),
           MT=MT(),
           NT=NT(),
           sol=sol(),
-          NR=NR,
           sampl=sampl()
         )
         
@@ -7066,7 +7224,12 @@ shinyServer(function(input, output,session) {
         
         outwac=lineout$mean$wac
         
-        lwac<-rep(outwac,NR)
+        
+        if(standard1()==1){
+          lwac<-rep(outwac,NR)
+        }else {
+          lwac<-rep(outwac,1)
+        }
         
         ############ calculates the rsq
         ybar<-outmean
@@ -7186,12 +7349,12 @@ shinyServer(function(input, output,session) {
             return(NULL)
           }else{
             
-            if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-              tmp=read.csv(input$calfile1$datapath[i])
+            if(stringr::str_ends(input$calfile1$datapath[1], "csv")) {
+              tmp=read.csv(input$calfile1$datapath[1])
               
             }
-            else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-              tmp=read.xlsx(input$calfile1$datapath[i],1)
+            else if(stringr::str_ends(input$calfile1$datapath[1], "xlsx")) {
+              tmp=read.xlsx(input$calfile1$datapath[1],1)
             }
             #tmp<- read.csv(inFile$datapath[1])
             
@@ -7200,6 +7363,8 @@ shinyServer(function(input, output,session) {
             
           }
         })
+        
+        
         
         standard1<-reactive(
           input$standard1
@@ -8098,6 +8263,7 @@ shinyServer(function(input, output,session) {
         standard1<-reactive(
           input$standard1
         )
+        
         umids<-reactive({
           
           if(standard1()==1){
@@ -8107,11 +8273,17 @@ shinyServer(function(input, output,session) {
           }
         })
         
-        umads<-reactive(
+       
+        umads<-reactive({
           
-          return(c(rep(input$u_mad1,nfile)))
+          if(standard1()==1){
+            return(c(rep(input$u_mad1,nfile)))
+          }else{
+            return(c(rep(0.000015,nfile)))
+            
+          }
           
-        )
+        })
         
         
         ####
@@ -8142,24 +8314,33 @@ shinyServer(function(input, output,session) {
         
         #####
         
+       
         midsm<-reactive(
-          if(standard1()==1){
-            caldata()$mid
+          if (standard1()==1){
+            return(c(rep(caldata()$mid,NR)))
           }else{
             
-            caldata()$mad/caldata()$mad
+            return(c(rep(caldata()$mad/caldata()$mad,NR)))
             
           }
-        ) 
+        )
         
         madsm<-reactive(
-          caldata()$mad
+          
+          if (standard1()==1){
+            caldata()$mad
+          }else{
+            return(c(rep(caldata()$mad,NR)))
+          }
         )
         
         wsol<-reactive(
-          caldata()$wsol
+          if (standard1()==1){
+            caldata()$wsol
+          }else {
+            return(c(rep(caldata()$wsol,NR)))
+          }
         )
-        
         
         rac<- reactive({
           
@@ -8221,21 +8402,24 @@ shinyServer(function(input, output,session) {
           
         })
         
-        
-        mdi<-reactive(
+      mdi<-reactive(
           
-          sampledata()$mdi
-          
+          if (standard1()==1){
+            
+            return(sampledata()$mdi)
+            
+          }else {
+            return(c(rep(sampledata()$mdi,NR)))
+            
+          } 
         )
         
         
         midsi<-reactive(
           if(standard1()==1){
             sampledata()$mids
-            
           }else{
-            
-            sampledata()$mdi/sampledata()$mdi
+            return(c(rep(sampledata()$mdi/sampledata()$mdi,NR)))
           }
         )
         
@@ -8248,14 +8432,40 @@ shinyServer(function(input, output,session) {
         
         
         sol<-reactive({
-          rep(1:N,NR)
+          
+          if(standard1()==1){
+            return(rep(1:N,NR))
+          }else {
+            return(rep(1:(N*NR)))
+          }
+          
         })
         
         sampl<-reactive({
-          rep(1:M,NR)
           
-        })   
+          if(standard1()==1){
+            rep(1:M,NR)
+          }else {
+            return(rep(1:(M*NR)))
+          }
+        })      
         
+        
+        NF<-reactive({
+          if(standard1()==1){
+            return(N)
+          }else {
+            return(N*NR)
+          }
+        })
+        
+        MF<-reactive({
+          if(standard1()==1){
+            return(M)
+          }else {
+            return(M*MR)
+          }
+        })
         
         #####
         
@@ -8272,13 +8482,12 @@ shinyServer(function(input, output,session) {
           wadm= wadm(),
           uwad=uwad(),
           NWS=NWS()+1,
-          N=N,
-          M=M,
+          N=NF(),
+          M=MF(),
           MT=MT(),
           NT=NT(),
           sol=sol(),
-          NR=NR,
-          sampl=sampl()
+        sampl=sampl()
         )
         
         
@@ -8385,7 +8594,13 @@ shinyServer(function(input, output,session) {
         
         outwac=lineout$mean$wac
         
-        lwac<-rep(outwac,NR)
+      
+        
+        if(standard1()==1){
+          lwac<-rep(outwac,NR)
+        }else {
+          lwac<-rep(outwac,1)
+        }
         
         ############ calculates the rsq
         ybar<-outmean
