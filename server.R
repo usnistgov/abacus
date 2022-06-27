@@ -116,7 +116,7 @@ shinyServer(function(input, output,session) {
         tmp <- read.xlsx(input$calfile$datapath[1],1)
       }
       #tmp<- read.csv(inFile$datapath[1])
-      N<<-nrow(tmp)#calbraton number
+      N<<-nrow(tmp)#calbration number
       NR<<-ncol(tmp)-3# number of replicates for each calibrant
       NWS<-max(tmp$wsol)# #working solutions from  calibrationtable
       cal<<-c(N,NR,NWS)
@@ -869,7 +869,6 @@ shinyServer(function(input, output,session) {
       input$choice
     )
     if (choice()==1){
-      
       ###NS==1
       if(N_tables==1){
         
@@ -893,7 +892,7 @@ shinyServer(function(input, output,session) {
           
         })
         
-        ####merge sample data tables
+        ####merge sample data talbes
         
         sampledata<-reactive({
           
@@ -1023,7 +1022,7 @@ shinyServer(function(input, output,session) {
         
         wsol<-reactive(
           if (standard()==1){
-          caldata()$wsol
+            caldata()$wsol
           }else {
             
             return(c(rep(caldata()$wsol,NR)))
@@ -1091,15 +1090,15 @@ shinyServer(function(input, output,session) {
         mdi<-reactive(
           
           if (standard()==1){
-          
-          return(sampledata()$mdi)
+            
+            return(sampledata()$mdi)
             
           }else {
             return(c(rep(sampledata()$mdi,NR)))
             
           } 
-            
-            
+          
+          
         )
         
         
@@ -1125,18 +1124,18 @@ shinyServer(function(input, output,session) {
         sol<-reactive({
           
           if(standard()==1){
-          return(rep(1:N,NR))
+            return(rep(1:N,NR))
           }else {
             
             return(rep(1:(N*NR)))
           }
-            
+          
         })
         
         sampl<-reactive({
           
           if(standard()==1){
-          rep(1:M,NR)
+            rep(1:M,NR)
           }else {
             return(rep(1:(M*NR)))
           }
@@ -1149,7 +1148,7 @@ shinyServer(function(input, output,session) {
             return(N*NR)
           }
         })
-
+        
         MF<-reactive({
           if(standard()==1){
             return(M)
@@ -1160,7 +1159,7 @@ shinyServer(function(input, output,session) {
         #####
         
         
-
+        
         linedata = list(
           midsm=midsm(),
           madsm=madsm(),
@@ -1183,7 +1182,6 @@ shinyServer(function(input, output,session) {
         )
         
         
-        # 
         require(R2OpenBUGS)
         ##################################################################
         ##################################################################
@@ -1193,6 +1191,8 @@ shinyServer(function(input, output,session) {
         
         
         linemodel<-function(){#calculate known mass ratios wac for N calibrants.
+          
+          
           
           midsprec<-1/(umids*umids)
           madsprec<-1/(umads*umads)
@@ -1242,6 +1242,54 @@ shinyServer(function(input, output,session) {
           vip<-sd(mult[])/mean(mult[]) ## vi for DOE program
           xnewp<-mean(mult[]) ## xnew for Doe program
         }
+          # midsprec<-1/(umids*umids)
+          # madsprec<-1/(umads*umads)
+          # 
+          # for(i in 1:NWS){
+          #   wadprec[i]<-1/(uwad[i]*uwad[i])
+          #   wad[i]~dnorm(wadm[i],wadprec[i])
+          # }
+          # 
+          # for(i in 1:N){mids[i]~dnorm(midsm[i],midsprec)
+          #   mads[i]~dnorm(madsm[i],madsprec)
+          # }
+          # for(i in 1:N){wac[i]<-wad[wsol[i]]*mads[i]/mids[i]}  
+          # 
+          # #######
+          # #calibration equation
+          # 
+          # a~dnorm(0,1.0E-5)
+          # b~dnorm(0,1.0E-5)
+          # xins~dnorm(0,0.0016)%_%I(0.001,)
+          # 
+          # chsqns~dgamma(0.5,0.5)
+          # fitprec<-xins/sqrt(chsqns)
+          # 
+          # for(i in 1:N){mean[i]<-a+b*wac[i]
+          # predm[i]~dnorm(mean[i],fitprec)}
+          # for(i in 1:NT){rac[i]~dnorm(mean[sol[i]],fitprec)
+          # }
+          # vyp<-1/sqrt(fitprec)
+          # ###
+          # # Compute the mass fraction wd
+          # a.cut<-cut(a)
+          # b.cut<-cut(b)
+          # sigras~dgamma(1.0E-5,1.0E-5)
+          # wdsig~dgamma(1.0E-3,1.0E-3)
+          # 
+          # wd~dnorm(0,1.0E-5)
+          # for(i in 1:M){wdm[i]~dnorm(wd,wdsig)
+          #   mdp[i]~dnorm(mdi[i],madsprec)
+          #   midsip[i]~dnorm(midsi[i],midsprec)
+          #   mult[i]<-wdm[i]*mdp[i]/midsip[i]
+          #   wtop[i]<-mdp[i]/midsip[i]
+          #   rasmean[i]<-a.cut+b.cut*wdm[i]*mdi[i]/midsi[i]
+          #   rasmeanp[i]~dnorm(rasmean[i],fitprec)}
+          # for(i in 1:MT){ras[i]~dnorm(rasmeanp[sampl[i]],sigras)}
+          # vsp<-1/sqrt(sigras) ### vs for DOE program
+          # vip<-sd(mult[])/mean(mult[]) ## vi for DOE program
+          # xnewp<-mean(mult[]) ## xnew for Doe program
+        # }
         
         ##################################################################
         ##################################################################
@@ -1257,9 +1305,9 @@ shinyServer(function(input, output,session) {
           
           lineout<-bugs(data=linedata,
                         inits=lineinits,
-                        parameters=c("a","b","wd","wac","wdm","mean","vyp","vsp","mult","vip","xnewp","predm"),   
+                        parameters=c("a","b","wd","wac","mean","wdm","vyp","vsp","mult","vip","xnewp","predm"),   
                         model.file=linemodel,
-                        n.iter = input$niters, n.burnin = input$nburnin, n.thin = 10,n.chains = 1)#debug=T)    
+                        n.iter = input$niters, n.burnin = input$nburnin, n.thin = 10,n.chains = 1,debug=T)    
         })
         
         ######
@@ -1303,8 +1351,6 @@ shinyServer(function(input, output,session) {
         }
         
         
-      
-        
         
         ############ calculates the rsq
         ybar<-outmean
@@ -1345,38 +1391,56 @@ shinyServer(function(input, output,session) {
         a<-min(lineout$mean$wac)
         b<-max(lineout$mean$wac)
         
-        vyll<-lineout$mean$vyp-2*lineout$sd$vyp
-        vyuu<-lineout$mean$vyp+2*lineout$sd$vyp
-        
+        #Expected standard deviation of peak area ratios (A:I) 
+        #from a calibration solution; (uy)
+        uyvyp=lineout$sims.list$vyp 
+        vypmin=quantile(uyvyp,0.025) #DOE vsl
+        vypmax=quantile(uyvyp,0.975) #DOE vsu
+        vyll=vypmin      
+        vyuu=vypmax
         vyl<-(vyll)^2
         vyu<-(vyuu)^2
         
         
+        #The Slope of calibration line
+        betab=lineout$sims.list$b 
+        betal<-quantile(betab,0.025)
+        betau<-quantile(betab,0.975)
         
-        betal<-lineout$mean$b-2*lineout$sd$b
-        betau<-lineout$mean$b+2*lineout$sd$b
-        
+        #Expected relative standard uncertainty of the concentration ratios
+        #of A:I in the calibration experiment (rux)
         etall<-min(lineout$sd$wac/lineout$mean$wac) #DOE etal
         etauu<-max(lineout$sd$wac/lineout$mean$wac) #DOE etau
-        
         etal<-(etall)^2
         etau<-(etauu)^2
         
-        vsll<-lineout$mean$vsp-2*lineout$sd$vsp #DOE vsl
-        vsuu<-lineout$mean$vsp+2*lineout$sd$vsp #DOE vsu
-        
-        vxll<-c("user's input")     #DOE vxl
-        vxuu<-c("user's input")    #DOE vxu
+        #Expected between-sample variability (standard deviation) of peak area ratios 
+        #(A:I) from the quantitation experiment(us)
+        usvsp=lineout$sims.list$vsp
+        vspmin=quantile(usvsp,0.025) #DOE vsl
+        vspmax=quantile(usvsp,0.975) #DOE vsu
+        vsll=vspmin      
+        vsuu=vspmax
         vsl<-(vsll)^2
         vsu<-(vsuu)^2
         
+        vxll<-c("user's input")     #DOE vxl
+        vxuu<-c("user's input")    #DOE vxu
+        
+        
+        #The expected approximate value of the measurand,quantity of A
         xnew<-lineout$mean$xnewp 
         
-        vill<-lineout$mean$vip-2*lineout$sd$vip #DOE vil
-        viuu<-lineout$mean$vip+2*lineout$sd$vip #DOE viu
-        
+        #Expected relative standard uncertainty of the concentration of I in samples 
+        #measured for the quantitation experiment; (ui)
+        uivip=lineout$sims.list$vip
+        vipmin=quantile(uivip,0.025)
+        vipmax=quantile(uivip,0.975)
+        vill=vipmin      
+        viuu=vipmax
         vil<-(vill)^2
         viu<-(viuu)^2
+        
         ##doe inputs
         expout<-list(
           xnew=xnew,slope_min=betal,slope_max=betau,
@@ -1677,7 +1741,6 @@ shinyServer(function(input, output,session) {
           }
         })
         
-       
         umads<-reactive({
           
           if(standard()==1){
@@ -1688,6 +1751,7 @@ shinyServer(function(input, output,session) {
           }
           
         })
+        
         
         ####
         
@@ -1826,7 +1890,7 @@ shinyServer(function(input, output,session) {
               
               else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
                 
-                nr<- nrow(read.xlsx(input$calfile$datapath[i]))
+                nr<- nrow(read.xlsx(input$calfile$datapath[i],1))
                 nrac<-ncol(read.xlsx(input$calfile$datapath[i],1))-3
                 
               }
@@ -1861,7 +1925,7 @@ shinyServer(function(input, output,session) {
               nrac<-ncol(read.csv(input$calfile$datapath[1]))-3
             }
             else if(stringr::str_ends(input$calfile$datapath[1], "xlsx")) {
-              k<-nrow(read.xlsx(input$calfile$datapath[1]))
+              k<-nrow(read.xlsx(input$calfile$datapath[1],1))
               nrac<-ncol(read.xlsx(input$calfile$datapath[1],1))-3
             }
             
@@ -2072,7 +2136,7 @@ shinyServer(function(input, output,session) {
                 nrac<-ncol(read.csv(input$samplefile$datapath[i]))-2
               }
               else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                nr<<-nrow(read.csv(input$samplefile$datapath[i]))
+                nr<<-nrow(read.xlsx(input$samplefile$datapath[i],1))
                 nrac<-ncol(read.xlsx(input$samplefile$datapath[i],1))-2
               }
               
@@ -2101,13 +2165,13 @@ shinyServer(function(input, output,session) {
             
             csv=list()
             
-            if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
+            if(stringr::str_ends(input$samplefile$datapath[1], "csv")) {
               k<-nrow(read.csv(input$samplefile$datapath[1]))
               nras<-ncol(read.csv(input$samplefile$datapath[1]))-2
             }
-            else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-              k<-nrow(read.csv(input$samplefile$datapath[1]))
-              nras<-ncol(read.csv(input$samplefile$datapath[1],1))-2
+            else if(stringr::str_ends(input$samplefile$datapath[1], "xlsx")) {
+              k<-nrow(read.xlsx(input$samplefile$datapath[1],1))
+              nras<-ncol(read.xlsx(input$samplefile$datapath[1],1))-2
             }
             # k<-nrow(read.csv(input$samplefile$datapath[1]))
             #nras<-ncol(read.csv(input$samplefile$datapath[1]))-2
@@ -2487,16 +2551,14 @@ shinyServer(function(input, output,session) {
           vilmean[[i]]=mean(vipp[[i]])
           vilsd[[i]]=sd(vipp[[i]])
           
-          vill[[i]]=vilmean[[i]]-2*vilsd[[i]]
-          viuu[[i]]=vilmean[[i]]+2*vilsd[[i]]
+          # vill[[i]]=min(vipp[[i]])
+          # viuu[[i]]=max(vipp[[i]])
+          vill[[i]]=quantile(vipp[[i]],0.025)
+          viuu[[i]]=quantile(vipp[[i]],0.975)
           xnew[[i]]=mean(mult[[i]])
         }
         
-        # vill<-unlist(vill)
-        # viuu<-unlist(viuu)
-        # vilmean(unlist(vilmean))
-        # 
-        # vilsd(unlist(vilsd))
+      
         outvip<-data.frame(mean=unlist(vilmean),sd=(unlist(vilsd)))
         #outvip<-data.frame(mean=vilmean,sd=vilsd)
         outxnew<-data.frame(mean=unlist(xnew))
@@ -2561,6 +2623,8 @@ shinyServer(function(input, output,session) {
         waca<-list()
         wacb<-list()
         vxll<-list()
+        vsll= list()
+        vyll= list()
         vxuu<-list()
         waca<-list()
         etalll<-list()
@@ -2576,26 +2640,41 @@ shinyServer(function(input, output,session) {
           etauuu[i]=max(rux[[i]])
           
         }
+     
+     
+        
+         vyll<-lineout$mean$vyp-1.96*lineout$sd$vyp
         
         
-        vyll<-lineout$mean$vyp-2*lineout$sd$vyp
-        vylll<-lineout$mean$vyp-2*lineout$sd$vyp
-        vyuu<-lineout$mean$vyp+2*lineout$sd$vyp
-        vyuuu<-lineout$mean$vyp+2*lineout$sd$vyp
+        if(vyll<=0){
+          vyll=0
+        }
+         vylll<-vyll
+         
+        vyuu<-lineout$mean$vyp+1.96*lineout$sd$vyp
+        vyuuu<-lineout$mean$vyp+1.96*lineout$sd$vyp
         
-        betal<-lineout$mean$b-2*lineout$sd$b
-        betall<-lineout$mean$b-2*lineout$sd$b
-        betau<-lineout$mean$b+2*lineout$sd$b
-        betauu<-lineout$mean$b+2*lineout$sd$b
+        betal<-lineout$mean$b-1.96*lineout$sd$b
+        betall<-lineout$mean$b-1.96*lineout$sd$b
+        
+        betau<-lineout$mean$b+1.96*lineout$sd$b
+        betauu<-lineout$mean$b+1.96*lineout$sd$b
         
         
         vxll<-c("user's input")     #DOE vxl
         vxuu<-c("user's input")    #DOE vxu
         
-        vsll<-lineout$mean$vsp-2*lineout$sd$vsp #DOE vsl
-        vslll<-lineout$mean$vsp-2*lineout$sd$vsp #DOE vsl
-        vsuu<-lineout$mean$vsp+2*lineout$sd$vsp #DOE vsu
-        vsuuu<-lineout$mean$vsp+2*lineout$sd$vsp #DOE vsu
+      
+        vsll<-lineout$mean$vsp-1.96*lineout$sd$vsp #DOE vsl
+        
+            if(vsll<=0){
+             vsll=0
+            }
+        
+        vslll<-vsll #DOE vsl
+        
+        vsuu<-lineout$mean$vsp+1.96*lineout$sd$vsp #DOE vsu
+        vsuuu<-lineout$mean$vsp+1.96*lineout$sd$vsp #DOE vsu
         
         
         xneww<-outxnew
@@ -3056,7 +3135,7 @@ shinyServer(function(input, output,session) {
           
         })
         
-       
+        
         umads<-reactive({
           
           if(standard()==1){
@@ -3249,6 +3328,8 @@ shinyServer(function(input, output,session) {
           }
         })
         
+        
+        
         #####
         
         linedata = list(
@@ -3269,9 +3350,8 @@ shinyServer(function(input, output,session) {
           MT=MT(),
           NT=NT(),
           sol=sol(),
-               sampl=sampl()
+          sampl=sampl()
         )
-        
         
         # 
         require(R2OpenBUGS)
@@ -3389,12 +3469,14 @@ shinyServer(function(input, output,session) {
         wacm=lineout$mean$wacm #avarage of the wac
         outwac=lineout$mean$wac 
         eta<-lineout$sd$wac/lineout$mean$wac
-       
+        
         if(standard()==1){
           lwac<-rep(outwac,NR)
         }else {
           lwac<-rep(outwac,1)
         }
+        
+        
         ############ calculates the rsq
         ybar<-outmean
         sst<-sum((rac()-mean(rac()))^2)
@@ -3431,38 +3513,62 @@ shinyServer(function(input, output,session) {
         
         ##### Run DOE Module
         
-        
         a<-min(lineout$mean$wac)
         b<-max(lineout$mean$wac)
         
-        vyll<-lineout$mean$vyp-2*lineout$sd$vyp
-        vyuu<-lineout$mean$vyp+2*lineout$sd$vyp
+        #Expected standard deviation of peak area ratios (A:I) 
+        #from a calibration solution; (uy)
+        uyvyp=lineout$sims.list$vyp 
+        vypmin=quantile(uyvyp,0.025) #DOE vsl
+        vypmax=quantile(uyvyp,0.975) #DOE vsu
+        vyll=vypmin      
+        vyuu=vypmax
         vyl<-(vyll)^2
         vyu<-(vyuu)^2
         
-        vxll<-c("user's input")    #DOE vxl
+        #Expected standard uncertainty of the concentration ratios of 
+        #A:I in the calibration experiment; (ux)
+        vxll<-c("user's input")      #DOE vxl
         vxuu<-c("user's input")      #DOE vxu
         
+        #Target calibration region;x-axis range in terms of concentrations
+        #of A:I in the calibration solutions
         wacm<-lineout$mean$wacm
-   
-        betal<-lineout$mean$b-2*lineout$sd$b
-        betau<-lineout$mean$b+2*lineout$sd$b
         
+        #The Slope of  calibration line
+        betab=lineout$sims.list$b
+        betal=quantile(betab,0.025) #min
+        betau=quantile(betab,0.975) #max
+        
+        #Expected relative standard uncertainty of the concentration ratios
+        #of A:I in the calibration experiment (rux)
         etall<-min(lineout$sd$wac/lineout$mean$wac) #DOE etal
         etauu<-max(lineout$sd$wac/lineout$mean$wac) #DOE etau
         
         etal<-(etall)^2
         etau<-(etauu)^2
         
-        vsll<-lineout$mean$vsp-2*lineout$sd$vsp #DOE vsl
-        vsuu<-lineout$mean$vsp+2*lineout$sd$vsp #DOE vsu
+        #Expected between-sample variability (standard deviation) of peak area ratios 
+        #(A:I) from the quantitation experiment(us)
+        usvsp=lineout$sims.list$vsp
+        vspmin=quantile(usvsp,0.025) #DOE vsl
+        vspmax=quantile(usvsp,0.975) #DOE vsu
+        vsll=vspmin      
+        vsuu=vspmax
+        
         vsl<-(vsll)^2
         vsu<-(vsuu)^2
         
+        #The expected approximate value of the measurand,quantity of A
         xnew<-lineout$mean$xnewp 
         
-        vill<-lineout$mean$vip-2*lineout$sd$vip #DOE vil
-        viuu<-lineout$mean$vip+2*lineout$sd$vip #DOE viu
+        #Expected relative standard uncertainty of the concentration of I in samples 
+        #measured for the quantitation experiment; (ui)
+        uivip=lineout$sims.list$vip
+        vipmin=quantile(uivip,0.025)
+        vipmax=quantile(uivip,0.975)
+        vill=vipmin      
+        viuu=vipmax
         vil<-(vill)^2
         viu<-(viuu)^2
         
@@ -3808,18 +3914,22 @@ shinyServer(function(input, output,session) {
             }else{
               nfile<<-nrow(input$calfile)
               
-              return(c(rep(1,nfile)))
+              return(c(rep(0.000015,nfile)))
               
             }
           }
         })
         
-        umads<<-reactive(
+        umads<-reactive({
           
-          return(c(rep(input$u_mad,nfile)))
+          if(standard()==1){
+            return(c(rep(input$u_mad,nfile)))
+          }else{
+            return(c(rep(0.000015,nfile)))
+            
+          }
           
-        )
-        
+        })
         
         ####
         
@@ -3859,10 +3969,10 @@ shinyServer(function(input, output,session) {
             {
               
               
-              if(stringr::str_ends(inFile$datapath[i], "csv")) {
+              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
                 nr= nrow(read.csv(input$calfile$datapath[i]))
               }
-              else if(stringr::str_ends(inFile$datapath[i], "xlsx")) {
+              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
                 nr= nrow(read.xlsx(input$calfile$datapath[i],1))
               }
               
@@ -3992,7 +4102,7 @@ shinyServer(function(input, output,session) {
               nrac<-ncol(read.csv(input$calfile$datapath[1]))-3
             }
             else if(stringr::str_ends(input$calfile$datapath[1], "xlsx")) {
-              k<-nrow(read.xlsx(input$calfile$datapath[1]))
+              k<-nrow(read.xlsx(input$calfile$datapath[1],1))
               nrac<-ncol(read.xlsx(input$calfile$datapath[1],1))-3
             }
             
@@ -4537,7 +4647,7 @@ shinyServer(function(input, output,session) {
                         inits=lineinits,
                         parameters=c("b","wd","wac","vyp","vsp","mult","mean","predm","mumeanfin"),   
                         model.file=linemodel,
-                        n.iter = 10000, n.burnin = 5000, n.thin = 10,n.chains =1,debug=T)
+                        n.iter = 10000, n.burnin = 5000, n.thin = 10,n.chains =1)#debug=T)
         })
         
         ###########################################
@@ -4635,8 +4745,8 @@ shinyServer(function(input, output,session) {
           vilmean[[i]]=mean(vipp[[i]])
           vilsd[[i]]=sd(vipp[[i]])
           
-          vill[[i]]=vilmean[[i]]-2*vilsd[[i]]
-          viuu[[i]]=vilmean[[i]]+2*vilsd[[i]]
+          vill[[i]]=quantile(vipp[[i]],0.025)
+          viuu[[i]]=quantile(vipp[[i]],0.975)
           xnew[[i]]=mean(mult[[i]])
           wacm[[i]]=mean(wacmean[[i]])
         }
@@ -4723,7 +4833,13 @@ shinyServer(function(input, output,session) {
         
         
         vyll<-lineout$mean$vyp-2*lineout$sd$vyp
-        vylll<-lineout$mean$vyp-2*lineout$sd$vyp
+        
+        if(vyll<=0){
+          vyll=0
+        }
+        vylll<-vyll
+        
+        
         vyuu<-lineout$mean$vyp+2*lineout$sd$vyp
         vyuuu<-lineout$mean$vyp+2*lineout$sd$vyp
         
@@ -4737,7 +4853,12 @@ shinyServer(function(input, output,session) {
         vxuu<-c("user's input")
         
         vsll<-lineout$mean$vsp-2*lineout$sd$vsp #DOE vsl
-        vslll<-lineout$mean$vsp-2*lineout$sd$vsp #DOE vsl
+        if(vsll<=0){
+          vsll=0
+        }
+        
+        vslll<-vsll #DOE vsl
+        
         vsuu<-lineout$mean$vsp+2*lineout$sd$vsp #DOE vsu
         vsuuu<-lineout$mean$vsp+2*lineout$sd$vsp #DOE vsu
         
@@ -6461,7 +6582,6 @@ shinyServer(function(input, output,session) {
         if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
           upload[[i]] <- read.csv(input$calfile1$datapath[i])
           
-          
         }
         else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
           upload[[i]] <- read.xlsx(input$calfile1$datapath[i],1)
@@ -6888,7 +7008,6 @@ shinyServer(function(input, output,session) {
           }
         })
         
-        
         umids<-reactive({
           
           if (standard1()==1){
@@ -7094,6 +7213,7 @@ shinyServer(function(input, output,session) {
           }
         })
         
+        
         #####
         
         linedata = list(
@@ -7114,6 +7234,7 @@ shinyServer(function(input, output,session) {
           MT=MT(),
           NT=NT(),
           sol=sol(),
+          NR=NR,
           sampl=sampl()
         )
         
@@ -7223,7 +7344,6 @@ shinyServer(function(input, output,session) {
         ########## sets up the data to plot the regression line and calculate the rsq
         
         outwac=lineout$mean$wac
-        
         
         if(standard1()==1){
           lwac<-rep(outwac,NR)
@@ -7383,7 +7503,7 @@ shinyServer(function(input, output,session) {
               return(c(rep(input$u_mid1,nfile)))
             }else{
               nfile<<-nrow(input$calfile1)
-              return(c(rep(1,nfile)))
+              return(c(rep(0.000015,nfile)))
               
             }
           }
@@ -7391,11 +7511,16 @@ shinyServer(function(input, output,session) {
         
         
         
-        umads<<-reactive(
+        umads<-reactive({
           
-          return(c(rep(input$u_mad1,nfile)))
+          if(standard1()==1){
+            return(c(rep(input$u_mad,nfile)))
+          }else{
+            return(c(rep(0.000015,nfile)))
+            
+          }
           
-        )
+        })
         
         
         ####
@@ -7822,8 +7947,8 @@ shinyServer(function(input, output,session) {
               
             }
             else if(stringr::str_ends(input$samplefile1$datapath[1], "xlsx")) {
-              k<-nrow(read.xlsx(input$samplefile1$datapath[1]))
-              nras<-ncol(read.xlsx(input$samplefile1$datapath[1]))-2
+              k<-nrow(read.xlsx(input$samplefile1$datapath[1],1))
+              nras<-ncol(read.xlsx(input$samplefile1$datapath[1],1))-2
             }
             
             #k<-nrow(read.csv(input$samplefile1$datapath[1]))
@@ -7844,7 +7969,7 @@ shinyServer(function(input, output,session) {
                 
               }
               else if(stringr::str_ends(input$samplefile1$datapath[i], "xlsx")) {
-                x=nrow(read.xlsx(input$samplefile1$datapath[i]))
+                x=nrow(read.xlsx(input$samplefile1$datapath[i],1))
               }
               
               #x=nrow(read.csv(input$samplefile1$datapath[i]))
@@ -7879,7 +8004,7 @@ shinyServer(function(input, output,session) {
               
             }
             else if(stringr::str_ends(input$calfile1$datapath[1], "xlsx")) {
-              nrac<-ncol(read.csv(input$calfile1$datapath[1],1))-3
+              nrac<-ncol(read.xlsx(input$calfile1$datapath[1],1))-3
             }
             # nrac<-ncol(read.csv(input$calfile1$datapath[1]))-3
             
@@ -7899,7 +8024,7 @@ shinyServer(function(input, output,session) {
                 
               }
               else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                vec[[i]]<-nrow(read.csv(input$calfile1$datapath[i],1))
+                vec[[i]]<-nrow(read.xlsx(input$calfile1$datapath[i],1))
               }
               #vec[[i]]<-nrow(read.csv(input$calfile1$datapath[i]))
             }
@@ -8264,16 +8389,17 @@ shinyServer(function(input, output,session) {
           input$standard1
         )
         
+        
         umids<-reactive({
           
           if(standard1()==1){
             return(c(rep(input$u_mid1,nfile)))
           }else{
-            return(c(rep(1,nfile)))
+            return(c(rep(0.000015,nfile)))
           }
         })
         
-       
+        
         umads<-reactive({
           
           if(standard1()==1){
@@ -8314,7 +8440,7 @@ shinyServer(function(input, output,session) {
         
         #####
         
-       
+        
         midsm<-reactive(
           if (standard1()==1){
             return(c(rep(caldata()$mid,NR)))
@@ -8402,7 +8528,7 @@ shinyServer(function(input, output,session) {
           
         })
         
-      mdi<-reactive(
+        mdi<-reactive(
           
           if (standard1()==1){
             
@@ -8467,6 +8593,7 @@ shinyServer(function(input, output,session) {
           }
         })
         
+        
         #####
         
         linedata = list(
@@ -8487,7 +8614,8 @@ shinyServer(function(input, output,session) {
           MT=MT(),
           NT=NT(),
           sol=sol(),
-        sampl=sampl()
+          NR=NR,
+          sampl=sampl()
         )
         
         
@@ -8593,8 +8721,6 @@ shinyServer(function(input, output,session) {
         ########## sets up the data to plot the regression line and calculate the rsq
         
         outwac=lineout$mean$wac
-        
-      
         
         if(standard1()==1){
           lwac<-rep(outwac,NR)
@@ -8744,17 +8870,21 @@ shinyServer(function(input, output,session) {
             }else{
               
               nfile<<-nrow(input$calfile1)
-              return(c(rep(1,nfile)))
+              return(c(rep(0.000015,nfile)))
             }
           }
         })
         
-        umads<-reactive(
-          if (!is.null(input$calfile1)){
-            nfile<-nrow(input$calfile1)
-            return(c(rep(input$u_mad1,nfile)))
+        umads<-reactive({
+          
+          if(standard1()==1){
+            return(c(rep(input$u_mad,nfile)))
+          }else{
+            return(c(rep(0.000015,nfile)))
+            
           }
-        )
+          
+        })
         
         
         ####
@@ -8893,7 +9023,7 @@ shinyServer(function(input, output,session) {
                 
               }
               else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                nr<<-nrow(read.xlsx(input$calfile1$datapath[i]))
+                nr<<-nrow(read.xlsx(input$calfile1$datapath[i],1))
                 nrac<-ncol(read.xlsx(input$calfile1$datapath[i],1))-3
               }
               # nr<<-nrow(read.csv(input$calfile1$datapath[i]))
@@ -8927,8 +9057,8 @@ shinyServer(function(input, output,session) {
               
             }
             else if(stringr::str_ends(input$calfile1$datapath[1], "xlsx")) {
-              k<-nrow(read.xlsx(input$calfile1$datapath[1]))
-              nrac<-ncol(read.xlsx(input$calfile1$datapath[1]))-3
+              k<-nrow(read.xlsx(input$calfile1$datapath[1],1))
+              nrac<-ncol(read.xlsx(input$calfile1$datapath[1],1))-3
             }
             
             # k<-nrow(read.csv(input$calfile1$datapath[1]))
@@ -9150,7 +9280,7 @@ shinyServer(function(input, output,session) {
               }
               
               else if(stringr::str_ends(input$samplefile1$datapath[i], "xlsx")) {
-                nr<<-nrow(read.xlsx(input$samplefile1$datapath[i]))
+                nr<<-nrow(read.xlsx(input$samplefile1$datapath[i],1))
                 nrac<-ncol(read.xlsx(input$samplefile1$datapath[i],1))-2
               }
               
@@ -9185,7 +9315,7 @@ shinyServer(function(input, output,session) {
             }
             
             else if(stringr::str_ends(input$samplefile1$datapath[1], "xlsx")) {
-              k<-nrow(read.xlsx(input$samplefile1$datapath[1]))
+              k<-nrow(read.xlsx(input$samplefile1$datapath[1],1))
               nras<-ncol(read.xlsx(input$samplefile1$datapath[1],1))-2
             }
             #k<-nrow(read.csv(input$samplefile1$datapath[1]))
