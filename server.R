@@ -1307,7 +1307,7 @@ shinyServer(function(input, output,session) {
                         inits=lineinits,
                         parameters=c("a","b","wd","wac","mean","wdm","vyp","vsp","mult","vip","xnewp","predm"),   
                         model.file=linemodel,
-                        n.iter = input$niters, n.burnin = input$nburnin, n.thin = 10,n.chains = 1,debug=T)    
+                        n.iter = input$niters, n.burnin = input$nburnin, n.thin = 10,n.chains = 1)#,debug=T)    
         })
         
         ######
