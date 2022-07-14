@@ -11,7 +11,7 @@ shinyUI(fluidPage(
   
   HTML('
     <link rel="stylesheet" href="css/nist-combined.css">
-    <script src="js/jquery-1.9.0.min.js" type="text/javascript" defer="defer"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="js/nist-header-footer.js" type="text/javascript" defer="defer"></script>
     <html class="nist-footer-bottom">
     '),
