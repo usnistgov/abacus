@@ -167,10 +167,10 @@ shinyServer(function(input, output,session) {
   
   output$downloadCalTable <- downloadHandler(
     filename = function(){
-      paste("cal_template","xlsx",sep=".")
+      paste("calibration_input_template","xlsx",sep=".")
     },
     content = function(file) {
-      file.copy("cal_template.xlsx",file)
+      file.copy("calibration_input_template.xlsx",file)
     }
   )
   
@@ -186,10 +186,10 @@ shinyServer(function(input, output,session) {
   
   output$downloadSamTable <- downloadHandler(
     filename = function(){
-      paste("sample_template","xlsx",sep=".")
+      paste("sample_input_template","xlsx",sep=".")
     },
     content = function(file) {
-      file.copy("sample_template.xlsx",file)
+      file.copy("sample_input_template.xlsx",file)
     }
   )
   
@@ -6730,10 +6730,10 @@ shinyServer(function(input, output,session) {
   
   output$downloadCalTable1 <- downloadHandler(
     filename = function(){
-      paste("cal_template","xlsx",sep=".")
+      paste("calibration_input_template","xlsx",sep=".")
     },
     content = function(file) {
-      file.copy("cal_template.xlsx",file)
+      file.copy("calibration_input_template.xlsx",file)
     }
   )
   
@@ -6753,10 +6753,10 @@ shinyServer(function(input, output,session) {
   output$downloadSamTable1 <- downloadHandler(
     
     filename = function(){
-      paste("sample_template","xlsx",sep=".")
+      paste("sample_input_template","xlsx",sep=".")
     },
     content = function(file) {
-      file.copy("sample_template.xlsx",file)
+      file.copy("sample_input_template.xlsx",file)
     }
   )
   
