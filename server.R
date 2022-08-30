@@ -1,12 +1,14 @@
 options(java.parameters = "-Xss2560k")
+
 library(shiny)
 library(shinycssloaders)
+library(rmarkdown)
 library('xlsx')
 source("./Toman2019-ExpDesignAug14.R")
-
+source("./plot.R") 
 shinyServer(function(input, output,session) {
   
-  
+
   
   #####display uploaded files
   ###caltables###
@@ -16,15 +18,7 @@ shinyServer(function(input, output,session) {
       
       upload <- list()
       for (i in 1:N_tables) {
-        
-        
-        if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-          upload[[i]] <- read.csv(input$calfile$datapath[i])}
-        else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-          upload[[i]] <- read.xlsx(input$calfile$datapath[i],1)
-        }
-        
-        # upload[[i]] <- read.csv(input$calfile$datapath[i])
+        upload[[i]] <- read.csv(input$calfile$datapath[i])
       }
       
       output$caltables <- renderUI({
@@ -54,13 +48,7 @@ shinyServer(function(input, output,session) {
       
       upload <- list()
       for (i in 1:N_tables) {
-        
-        if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-          upload[[i]] <- read.csv(input$samplefile$datapath[i])}
-        else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-          upload[[i]] <- read.xlsx(input$samplefile$datapath[i],1)
-        }
-        #upload[[i]] <- read.csv(input$samplefile$datapath[i])
+        upload[[i]] <- read.csv(input$samplefile$datapath[i])
       }
       
       output$sampletables <- renderUI({
@@ -82,7 +70,7 @@ shinyServer(function(input, output,session) {
   })
   
   
-  
+
   
   
   ###number of calibration
@@ -109,14 +97,8 @@ shinyServer(function(input, output,session) {
     }else{
       
       nfile<<-nrow(input$calfile)
-      
-      if(stringr::str_ends(input$calfile$datapath[1], "csv")) {
-        tmp <- read.csv(input$calfile$datapath[1])}
-      else if(stringr::str_ends(input$calfile$datapath[1], "xlsx")) {
-        tmp <- read.xlsx(input$calfile$datapath[1],1)
-      }
-      #tmp<- read.csv(inFile$datapath[1])
-      N<<-nrow(tmp)#calbration number
+      tmp<- read.csv(inFile$datapath[1])
+      N<<-nrow(tmp)#calbraton number
       NR<<-ncol(tmp)-3# number of replicates for each calibrant
       NWS<-max(tmp$wsol)# #working solutions from  calibrationtable
       cal<<-c(N,NR,NWS)
@@ -129,7 +111,6 @@ shinyServer(function(input, output,session) {
   
   
   
-  
   ######number of sample#####
   
   b1 <- reactive({
@@ -138,12 +119,7 @@ shinyServer(function(input, output,session) {
       return(NULL)
     }else{
       
-      if(stringr::str_ends(input$samplefile$datapath[1], "csv")) {
-        tmp <- read.csv(input$samplefile$datapath[1])}
-      else if(stringr::str_ends(input$samplefile$datapath[1], "xlsx")) {
-        tmp <- read.xlsx(input$samplefile$datapath[1],1)
-      }
-      #tmp<- read.csv(inFile$datapath[1])
+      tmp<- read.csv(inFile$datapath[1])
       M<<-nrow(tmp)
       MR<<-ncol(tmp)-2
       sam<-c(M,MR)
@@ -167,10 +143,10 @@ shinyServer(function(input, output,session) {
   
   output$downloadCalTable <- downloadHandler(
     filename = function(){
-      paste("calibration_input_template","xlsx",sep=".")
+      paste("cal_template","xlsx",sep=".")
     },
     content = function(file) {
-      file.copy("calibration_input_template.xlsx",file)
+      file.copy("cal_template.xlsx",file)
     }
   )
   
@@ -186,15 +162,15 @@ shinyServer(function(input, output,session) {
   
   output$downloadSamTable <- downloadHandler(
     filename = function(){
-      paste("sample_input_template","xlsx",sep=".")
+      paste("sample_template","xlsx",sep=".")
     },
     content = function(file) {
-      file.copy("sample_input_template.xlsx",file)
+      file.copy("sample_template.xlsx",file)
     }
   )
   
   ####varibles used 
-  
+ 
   vecwac <<- reactive({
     
     if (!is.null(input$calfile))
@@ -202,13 +178,7 @@ shinyServer(function(input, output,session) {
       
       vec=list()
       for(i in 1: nfile){
-        
-        if(stringr::str_ends(input$califile$datapath[i], "csv")) {
-          vec[[i]]<- nrow(read.csv(input$calfile$datapath[i]))}
-        else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-          vec[[i]] <- nrow(read.xlsx(input$calfile$datapath[i],1))
-        }
-        
+        vec[[i]]<-nrow(read.csv(input$calfile$datapath[i]))
       }
       return(vec)
     }
@@ -221,12 +191,7 @@ shinyServer(function(input, output,session) {
       
       vec=list()
       for(i in 1: nfile){
-        if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-          vec[[i]]<- nrow(read.csv(input$samplefile$datapath[i]))}
-        else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-          vec[[i]] <- nrow(read.xlsx(input$samplefile$datapath[i],1))
-        }
-        #vec[[i]]<-nrow(read.csv(input$samplefile$datapath[i]))
+        vec[[i]]<-nrow(read.csv(input$samplefile$datapath[i]))
       }
       return(vec)
     }
@@ -239,144 +204,144 @@ shinyServer(function(input, output,session) {
   
   output$calnum <- renderTable(a1(),digits = 0)
   output$samplenum2 <- renderTable(b1(),digits = 0)
-  
+ 
   #### Doe Input
   # observe({
   #   if (!is.null(input$calfile)) {
   #    
-  output$expui<-renderUI(
+      output$expui<-renderUI(
     
     fluidRow(style='margin: 0px;',
-             column(12,
-                    checkboxInput("exp", label = strong("Run the experiment design module and specify the parameters",style = "color:seagreen"), value = F)
-             ))
-  )
+               column(12,
+                      checkboxInput("exp", label = strong("Run the experiment design module and specify the parameters",style = "color:seagreen"), value = F)
+               ))
+      )
   #   }
   # })
-  ######standard options
-  
-  standardui<-reactive(
-    
-    input$standard
-  )
-  
-  output$standard_ui<-renderUI({
-    
-    if(standardui()==1){
-      tagList(
-        fluidRow(style='margin: 0px;',
-                 column(12,
-                        h3("Calibration standard inputs:",style = "color:steelblue"))),
-        
-        
-        fluidRow(style='margin: 0px;',
-                 column(6,
-                        wellPanel(
-                          textInput("wadm",label =h4("Analyte working standard solution concentrations; Comma-separated entries for multiple inputs"), value="94.2, 95.5, 94.5",placeholder = "e.g. '94.2, 95.5, 94.5'"))),
-                 
-                 column(6,
-                        wellPanel(
-                          textInput("uwad",label = h4("Uncertainties in working standard solution; Comma-separated entries for multiple inputs"),value="0.427, 0.434, 0.429",placeholder = "e.g. '0.427, 0.434, 0.429'")))),
-        
-        fluidRow(style='margin: 0px;',
-                 
-                 column(6,
-                        wellPanel(
-                          numericInput(
-                            "u_mid", 
-                            label = h4("Uncertainty in masses (or volume) of internal standard solution added to calibrants (g, mL, etc.)"),
-                            value = 0.000015
-                          ))), 
-                 
-                 column(6,
-                        wellPanel(
-                          numericInput(
-                            "u_mad", 
-                            label = h4("Uncertainty in masses (or volume) of analyte working standard solution added to calibrants(g, mL, etc.)"),
-                            value = 0.000015
-                          )))), 
-        
-        
-        fluidRow(style='margin: 0px;',
-                 column(12,
-                        h3("Sample preparation uncertainties:",style = "color:steelblue"))), 
-        fluidRow(style='margin: 0px;',
-                 column(6,
-                        wellPanel(
-                          numericInput(
-                            "u_mids", 
-                            label = h4("Uncertainty in masses (or volume) of internal standard solution spiked into samples (g, mL, etc.)"),
-                            value = 0.000015
-                          ))), 
-                 
-                 column(6,
-                        wellPanel(        
-                          numericInput(
-                            "u_mdi", 
-                            label = h4("Uncertainty in the masses (or volume) of substance sampled for measurement (serum, food, blood, etc.)"),
-                            value = 0.000015
-                          ))))
-      )
-    }else{
+      ######standard options
       
-      tagList(
-        fluidRow(style='margin: 0px;',
-                 column(12,
-                        h3("Calibration standard inputs:",style = "color:steelblue"))),
+      standardui<-reactive(
         
-        
-        fluidRow(style='margin: 0px;',
-                 column(6,
-                        wellPanel(
-                          textInput("wadm",label =h4("Analyte working standard solution concentrations; Comma-separated entries for multiple inputs"), value="94.2, 95.5, 94.5",placeholder = "e.g. '94.2, 95.5, 94.5'"))),
-                 
-                 column(6,
-                        wellPanel(
-                          textInput("uwad",label = h4("Uncertainties in working standard solution; Comma-separated entries for multiple inputs"),value="0.427, 0.434, 0.429",placeholder = "e.g. '0.427, 0.434, 0.429'")))),
-        
-        fluidRow(style='margin: 0px;',
-                 
-                 # column(6,
-                 #        wellPanel(
-                 #          numericInput(
-                 #            "u_mid", 
-                 #            label = h4("Uncertainty in masses (or volume) of internal standard solution added to calibrants (g, mL, etc.)"),
-                 #            value = 0.000015
-                 #          ))), 
-                 
-                 column(12,
-                        wellPanel(
-                          numericInput(
-                            "u_mad", 
-                            label = h4("Uncertainty in masses (or volume) of analyte working standard solution added to calibrants(g, mL, etc.)"),
-                            value = 0.000015
-                          )))), 
-        
-        
-        fluidRow(style='margin: 0px;',
-                 column(12,
-                        h3("Sample preparation uncertainties:",style = "color:steelblue"))), 
-        fluidRow(style='margin: 0px;',
-                 # column(6,
-                 #        wellPanel(
-                 #          numericInput(
-                 #            "u_mids",
-                 #            label = NULL,
-                 #            value = 1
-                 #          ))),
-                 
-                 column(12,
-                        wellPanel(        
-                          numericInput(
-                            "u_mdi", 
-                            label = h4("Uncertainty in the masses (or volume) of substance sampled for measurement (serum, food, blood, etc.)"),
-                            value = 0.000015
-                          ))))
+        input$standard
       )
-    }
-    
-  })
-  
+      
+      output$standard_ui<-renderUI({
+        
+        if(standardui()==1){
+          tagList(
+          fluidRow(style='margin: 0px;',
+                   column(12,
+                          h3("Calibration standard inputs:",style = "color:steelblue"))),
+          
+          
+          fluidRow(style='margin: 0px;',
+                   column(6,
+                          wellPanel(
+                            textInput("wadm",label =h4("Analyte working standard solution concentrations; Comma-separated entries for multiple inputs"), value="94.2, 95.5, 94.5",placeholder = "e.g. '94.2, 95.5, 94.5'"))),
+                   
+                   column(6,
+                          wellPanel(
+                            textInput("uwad",label = h4("Uncertainties in working standard solution; Comma-separated entries for multiple inputs"),value="0.427, 0.434, 0.429",placeholder = "e.g. '0.427, 0.434, 0.429'")))),
+          
+          fluidRow(style='margin: 0px;',
+                   
+                   column(6,
+                          wellPanel(
+                            numericInput(
+                              "u_mid", 
+                              label = h4("Uncertainty in masses (or volume) of internal standard solution added to calibrants (g, mL, etc.)"),
+                              value = 0.000015
+                            ))), 
+                   
+                   column(6,
+                          wellPanel(
+                            numericInput(
+                              "u_mad", 
+                              label = h4("Uncertainty in masses (or volume) of analyte working standard solution added to calibrants(g, mL, etc.)"),
+                              value = 0.000015
+                            )))), 
+          
+          
+          fluidRow(style='margin: 0px;',
+                   column(12,
+                          h3("Sample preparation uncertainties:",style = "color:steelblue"))), 
+          fluidRow(style='margin: 0px;',
+                   column(6,
+                          wellPanel(
+                            numericInput(
+                              "u_mids", 
+                              label = h4("Uncertainty in masses (or volume) of internal standard solution spiked into samples (g, mL, etc.)"),
+                              value = 0.000015
+                            ))), 
+                   
+                   column(6,
+                          wellPanel(        
+                            numericInput(
+                              "u_mdi", 
+                              label = h4("Uncertainty in the masses (or volume) of substance sampled for measurement (serum, food, blood, etc.)"),
+                              value = 0.000015
+                            ))))
+          )
+        }else{
+          
+          tagList(
+          fluidRow(style='margin: 0px;',
+                   column(12,
+                          h3("Calibration standard inputs:",style = "color:steelblue"))),
+          
+          
+          fluidRow(style='margin: 0px;',
+                   column(6,
+                          wellPanel(
+                            textInput("wadm",label =h4("Analyte working standard solution concentrations; Comma-separated entries for multiple inputs"), value="94.2, 95.5, 94.5",placeholder = "e.g. '94.2, 95.5, 94.5'"))),
+                   
+                   column(6,
+                          wellPanel(
+                            textInput("uwad",label = h4("Uncertainties in working standard solution; Comma-separated entries for multiple inputs"),value="0.427, 0.434, 0.429",placeholder = "e.g. '0.427, 0.434, 0.429'")))),
+          
+          fluidRow(style='margin: 0px;',
+                   
+                   # column(6,
+                   #        wellPanel(
+                   #          numericInput(
+                   #            "u_mid", 
+                   #            label = h4("Uncertainty in masses (or volume) of internal standard solution added to calibrants (g, mL, etc.)"),
+                   #            value = 0.000015
+                   #          ))), 
+                   
+                   column(12,
+                          wellPanel(
+                            numericInput(
+                              "u_mad", 
+                              label = h4("Uncertainty in masses (or volume) of analyte working standard solution added to calibrants(g, mL, etc.)"),
+                              value = 0.000015
+                            )))), 
+          
+          
+          fluidRow(style='margin: 0px;',
+                   column(12,
+                          h3("Sample preparation uncertainties:",style = "color:steelblue"))), 
+          fluidRow(style='margin: 0px;',
+                   # column(6,
+                   #        wellPanel(
+                   #          numericInput(
+                   #            "u_mids",
+                   #            label = NULL,
+                   #            value = 1
+                   #          ))),
+                   
+                   column(12,
+                          wellPanel(        
+                            numericInput(
+                              "u_mdi", 
+                              label = h4("Uncertainty in the masses (or volume) of substance sampled for measurement (serum, food, blood, etc.)"),
+                              value = 0.000015
+                            ))))
+          )
+        }
+        
+      })
+      
   # choicea<-reactive (
   #   
   #   input$chocie
@@ -389,111 +354,111 @@ shinyServer(function(input, output,session) {
   
   observe({
     if (!is.null(input$calfile)) {
-      
-      output$doeinput <- renderUI({
-        
-        if(input$exp){
+
+  output$doeinput <- renderUI({
+    
+    if(input$exp){
+   
+      if(choicea()==1){
+        tagList(
+          fluidRow(style='margin: 0px;',
+                   column(6,
+                          wellPanel(
+                            ("Total number of available samples"),
+                            numericInput("doetotn",label =NULL, 
+                                         value="40"))),
+                   
+                   column(6,
+                          wellPanel(
+                            ("Target maximum relative (%) standard uncertainty"),
+                            numericInput("doestd",label =NULL, 
+                                         value="2.5")))),
           
-          if(choicea()==1){
-            tagList(
-              fluidRow(style='margin: 0px;',
-                       column(6,
-                              wellPanel(
-                                ("Total number of available samples"),
-                                numericInput("doetotn",label =NULL, 
-                                             value="40"))),
-                       
-                       column(6,
-                              wellPanel(
-                                ("Target maximum relative (%) standard uncertainty"),
-                                numericInput("doestd",label =NULL, 
-                                             value="2.5")))),
-              
-              
-              fluidRow(style='margin: 0px;',
-                       
-                       column(12,
-                              wellPanel(
-                                ("Expected standard uncertainty of the concentration ratios of A:I in the calibration experiment; (ux)"),
-                                fluidRow(
-                                  column(6,
-                                         numericInput(
-                                           "vxl",
-                                           label = h5("Minimum:"),
-                                           value = 0)),
-                                  column(6,
-                                         numericInput(
-                                           "vxu",
-                                           label = h5("Maximum:"),
-                                           value = 0)))
-                              )))
-              
-            )
-            
-          } else{
-            
-            tagList(
-              
-              fluidRow(style='margin: 0px;',
-                       column(6,
-                              wellPanel(
-                                ("Total number of available samples"),
-                                numericInput("doetotn1",label =NULL, 
-                                             value="40"))),
-                       
-                       column(6,
-                              wellPanel(
-                                ("Target maximum relative (%) standard uncertainty"),
-                                numericInput("doestd1",label =NULL, 
-                                             value="2.5")))),
-              
-              
-              fluidRow(style='margin: 0px;',
-                       
-                       column(12,
-                              wellPanel(
-                                ("Expected standard uncertainty of the concentration ratios of A:I in the calibration experiment; (ux)"),
-                                fluidRow(
-                                  column(6,
-                                         numericInput(
-                                           "vxl1",
-                                           label = h5("Minimum:"),
-                                           value = 0)),
-                                  column(6,
-                                         numericInput(
-                                           "vxh1",
-                                           label = h5("Maximum:"),
-                                           value = 0)))
-                              )))
-              
-            )
-            
-          }
-        }
-      })  
-      
+          
+          fluidRow(style='margin: 0px;',
+                   
+                   column(12,
+                          wellPanel(
+                            ("Expected standard uncertainty of the concentration ratios of A:I in the calibration experiment; (ux)"),
+                            fluidRow(
+                              column(6,
+                                     numericInput(
+                                       "vxl",
+                                       label = h5("Minimum:"),
+                                       value = 0)),
+                              column(6,
+                                     numericInput(
+                                       "vxu",
+                                       label = h5("Maximum:"),
+                                       value = 0)))
+                          )))
+          
+      )
+     
+      } else{
+        
+        tagList(
+          
+          fluidRow(style='margin: 0px;',
+                   column(6,
+                          wellPanel(
+                            ("Total number of available samples"),
+                            numericInput("doetotn1",label =NULL, 
+                                         value="40"))),
+                   
+                   column(6,
+                          wellPanel(
+                            ("Target maximum relative (%) standard uncertainty"),
+                            numericInput("doestd1",label =NULL, 
+                                         value="2.5")))),
+          
+          
+          fluidRow(style='margin: 0px;',
+                   
+                   column(12,
+                          wellPanel(
+                            ("Expected standard uncertainty of the concentration ratios of A:I in the calibration experiment; (ux)"),
+                            fluidRow(
+                              column(6,
+                                     numericInput(
+                                       "vxl1",
+                                       label = h5("Minimum:"),
+                                       value = 0)),
+                              column(6,
+                                     numericInput(
+                                       "vxh1",
+                                       label = h5("Maximum:"),
+                                       value = 0)))
+                          )))
+          
+        )
+        
+      }
+    }
+  })  
+  
     }
   })
-  
-  
+      
+    
   
   observe({
     if (!is.null(input$calfile)) {
-      
-      output$doem <- renderUI({
-        if(input$exp){
-          h4("The Experiment Design Results:",style = "color:seagreen")
-        }
-      })
-      output$doee <- renderUI({
-        if(input$exp){
-          h4("The Posterior Estimates:",style = "color:seagreen")
-        }
-      })
+  
+  output$doem <- renderUI({
+    if(input$exp){
+  h4("The Experiment Design Results:",style = "color:seagreen")
+    }
+  })
+  output$doee <- renderUI({
+    if(input$exp){
+      h4("The Posterior Estimates:",style = "color:seagreen")
+    }
+  })
     }
   })
   
-  
+ 
   
   doeoption<-reactive({
     
@@ -791,32 +756,32 @@ shinyServer(function(input, output,session) {
   
   observe({
     if (!is.null(input$calfile)) {
-      output$doe12 <- renderUI({
-        if(input$exp){
-          
-          if(N_tables==2){
-            
-            fluidRow(style='margin: 0px;',
-                     column(6,
-                            radioButtons("doe1",
-                                         label="Output the experimental design for:",
-                                         choices=list(
-                                           "Datasets 1"=1,"Datasets 2"=2),
-                                         inline = T
-                            )
-                     )
-            )
-          }
-        }
-      })
+  output$doe12 <- renderUI({
+    if(input$exp){
+      
+      if(N_tables==2){
+      
+      fluidRow(style='margin: 0px;',
+               column(6,
+                      radioButtons("doe1",
+                                   label="Output the experimental design for:",
+                                   choices=list(
+                                     "Datasets 1"=1,"Datasets 2"=2),
+                                   inline = T
+                      )
+               )
+      )
+      }
+    }
+  })
     }
   })
   output$doeenter <- renderUI({
     if(input$enter){
-      fluidRow(style='margin: 0px;',
-               column(12,
-                      h3("Model Results",style = "color:steelblue"))
-      )
+  fluidRow(style='margin: 0px;',
+    column(12,
+    h3("Model Results",style = "color:steelblue"))
+  )
     }
   })
   # 
@@ -829,7 +794,7 @@ shinyServer(function(input, output,session) {
   
   
   outbayes<- eventReactive(input$go,{
-    
+ 
     NWS1 <- reactive({
       
       inFile <- input$calfile
@@ -838,13 +803,7 @@ shinyServer(function(input, output,session) {
       }else{
         
         nfile<<-nrow(input$calfile)
-        
-        if(stringr::str_ends(inFile$datapath[1], "csv")) {
-          tmp <- read.csv(inFile$datapath[1])}
-        else if(stringr::str_ends(inFile$datapath[1], "xlsx")) {
-          tmp <- read.xlsx(inFile$datapath[1],1)
-        }
-        #tmp<- read.csv(inFile$datapath[1])
+        tmp<- read.csv(inFile$datapath[1])
         NWS1<-max(tmp$wsol)# #working solutions from  calibrationtable
         return(NWS1)
         
@@ -879,14 +838,7 @@ shinyServer(function(input, output,session) {
           else
           {
             csv=list()
-            
-            
-            if(stringr::str_ends(input$calfile$datapath[1], "csv")) {
-              csv <- read.csv(input$calfile$datapath[1])}
-            else if(stringr::str_ends(input$calfile$datapath[1], "xlsx")) {
-              csv <- read.xlsx(input$calfile$datapath[1],1)
-            }
-            #csv=read.csv(input$calfile$datapath[1])
+            csv=read.csv(input$calfile$datapath[1])
             return(csv)   
           }
           
@@ -902,14 +854,7 @@ shinyServer(function(input, output,session) {
           {
             
             csv=list()
-            
-            if(stringr::str_ends(input$samplefile$datapath[1], "csv")) {
-              csv<- read.csv(input$samplefile$datapath[1])}
-            else if(stringr::str_ends(input$samplefile$datapath[1], "xlsx")) {
-              csv <- read.xlsx(input$samplefile$datapath[1],1)
-            }
-            
-            #csv=read.csv(input$samplefile$datapath[1])
+            csv=read.csv(input$samplefile$datapath[1])
             return(csv)
           }
           
@@ -936,13 +881,7 @@ shinyServer(function(input, output,session) {
             return(NULL)
           }else{
             
-            if(stringr::str_ends(input$calfile$datapath[1], "csv")) {
-              tmp<- read.csv(input$calfile$datapath[1])}
-            else if(stringr::str_ends(input$calfile$datapath[1], "xlsx")) {
-              tmp <- read.xlsx(input$calfile$datapath[1],1)
-            }
-            
-            #tmp<- read.csv(inFile$datapath[1])
+            tmp<- read.csv(inFile$datapath[1])
             
             return(max(tmp$wsol))# #working solutions from  calibrationtable
             
@@ -954,24 +893,19 @@ shinyServer(function(input, output,session) {
         umids<-reactive({
           
           if(standard()==1){
-            return(c(rep(input$u_mid,nfile)))
+          return(c(rep(input$u_mid,nfile)))
           }else{
-            return(c(rep(0.000015,nfile)))
+            return(c(rep(1,nfile)))
             
           }
           
         })
         
-        umads<-reactive({
+        umads<-reactive(
           
-          if(standard()==1){
-            return(c(rep(input$u_mad,nfile)))
-          }else{
-            return(c(rep(0.000015,nfile)))
-            
-          }
+          return(c(rep(input$u_mad,nfile)))
           
-        })
+        )
         
         
         ####
@@ -1003,30 +937,20 @@ shinyServer(function(input, output,session) {
         
         midsm<-reactive(
           if (standard()==1){
-            caldata()$mid
-          }else{
-            
-            return(c(rep(caldata()$mad/caldata()$mad,NR)))
-            
-          }
+          caldata()$mid
+        }else{
+          
+            caldata()$mad/caldata()$mad
+        
+        }
         )
         
         madsm<-reactive(
-          
-          if (standard()==1){
-            caldata()$mad
-          }else{
-            return(c(rep(caldata()$mad,NR)))
-          }
+          caldata()$mad
         )
         
         wsol<-reactive(
-          if (standard()==1){
-            caldata()$wsol
-          }else {
-            
-            return(c(rep(caldata()$wsol,NR)))
-          }
+          caldata()$wsol
         )
         
         
@@ -1041,14 +965,7 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-                csv[[i]]<- read.csv(input$calfile$datapath[i])}
-              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-                csv[[i]] <- read.xlsx(input$calfile$datapath[i],1)
-              }
-              
-              # csv[[i]]=read.csv(input$calfile$datapath[i])
+              csv[[i]]=read.csv(input$calfile$datapath[i])
               csv[[i]][1:3]<-NULL
             }
             
@@ -1070,14 +987,7 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-                csv[[i]]<- read.csv(input$samplefile$datapath[i])}
-              else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                csv[[i]] <- read.xlsx(input$samplefile$datapath[i],1)
-              }
-              
-              # csv[[i]]=read.csv(input$samplefile$datapath[i])
+              csv[[i]]=read.csv(input$samplefile$datapath[i])
               csv[[i]][1:2]<-NULL
             }
             
@@ -1089,15 +999,7 @@ shinyServer(function(input, output,session) {
         
         mdi<-reactive(
           
-          if (standard()==1){
-            
-            return(sampledata()$mdi)
-            
-          }else {
-            return(c(rep(sampledata()$mdi,NR)))
-            
-          } 
-          
+          sampledata()$mdi
           
         )
         
@@ -1106,13 +1008,13 @@ shinyServer(function(input, output,session) {
         midsi<-reactive(
           
           if(standard()==1){
-            sampledata()$mids
+          sampledata()$mids
           }else{
-            return(c(rep(sampledata()$mdi/sampledata()$mdi,NR)))
+            sampledata()$mdi/sampledata()$mdi
           }
           
         )
-        
+         
         MT<-reactive(
           
           return(M*MR)
@@ -1122,43 +1024,16 @@ shinyServer(function(input, output,session) {
         
         
         sol<-reactive({
-          
-          if(standard()==1){
-            return(rep(1:N,NR))
-          }else {
-            
-            return(rep(1:(N*NR)))
-          }
-          
+          rep(1:N,NR)
         })
         
         sampl<-reactive({
+          rep(1:M,NR)
           
-          if(standard()==1){
-            rep(1:M,NR)
-          }else {
-            return(rep(1:(M*NR)))
-          }
         })   
         
-        NF<-reactive({
-          if(standard()==1){
-            return(N)
-          }else {
-            return(N*NR)
-          }
-        })
         
-        MF<-reactive({
-          if(standard()==1){
-            return(M)
-          }else {
-            return(M*MR)
-          }
-        })
         #####
-        
-        
         
         linedata = list(
           midsm=midsm(),
@@ -1173,15 +1048,17 @@ shinyServer(function(input, output,session) {
           wadm= wadm(),
           uwad=uwad(),
           NWS=NWS()+1,
-          N=NF(),
-          M=MF(),
+          N=N,
+          M=M,
           MT=MT(),
           NT=NT(),
           sol=sol(),
+          NR=NR,
           sampl=sampl()
         )
         
         
+        # 
         require(R2OpenBUGS)
         ##################################################################
         ##################################################################
@@ -1191,8 +1068,6 @@ shinyServer(function(input, output,session) {
         
         
         linemodel<-function(){#calculate known mass ratios wac for N calibrants.
-          
-          
           
           midsprec<-1/(umids*umids)
           madsprec<-1/(umads*umads)
@@ -1242,54 +1117,6 @@ shinyServer(function(input, output,session) {
           vip<-sd(mult[])/mean(mult[]) ## vi for DOE program
           xnewp<-mean(mult[]) ## xnew for Doe program
         }
-          # midsprec<-1/(umids*umids)
-          # madsprec<-1/(umads*umads)
-          # 
-          # for(i in 1:NWS){
-          #   wadprec[i]<-1/(uwad[i]*uwad[i])
-          #   wad[i]~dnorm(wadm[i],wadprec[i])
-          # }
-          # 
-          # for(i in 1:N){mids[i]~dnorm(midsm[i],midsprec)
-          #   mads[i]~dnorm(madsm[i],madsprec)
-          # }
-          # for(i in 1:N){wac[i]<-wad[wsol[i]]*mads[i]/mids[i]}  
-          # 
-          # #######
-          # #calibration equation
-          # 
-          # a~dnorm(0,1.0E-5)
-          # b~dnorm(0,1.0E-5)
-          # xins~dnorm(0,0.0016)%_%I(0.001,)
-          # 
-          # chsqns~dgamma(0.5,0.5)
-          # fitprec<-xins/sqrt(chsqns)
-          # 
-          # for(i in 1:N){mean[i]<-a+b*wac[i]
-          # predm[i]~dnorm(mean[i],fitprec)}
-          # for(i in 1:NT){rac[i]~dnorm(mean[sol[i]],fitprec)
-          # }
-          # vyp<-1/sqrt(fitprec)
-          # ###
-          # # Compute the mass fraction wd
-          # a.cut<-cut(a)
-          # b.cut<-cut(b)
-          # sigras~dgamma(1.0E-5,1.0E-5)
-          # wdsig~dgamma(1.0E-3,1.0E-3)
-          # 
-          # wd~dnorm(0,1.0E-5)
-          # for(i in 1:M){wdm[i]~dnorm(wd,wdsig)
-          #   mdp[i]~dnorm(mdi[i],madsprec)
-          #   midsip[i]~dnorm(midsi[i],midsprec)
-          #   mult[i]<-wdm[i]*mdp[i]/midsip[i]
-          #   wtop[i]<-mdp[i]/midsip[i]
-          #   rasmean[i]<-a.cut+b.cut*wdm[i]*mdi[i]/midsi[i]
-          #   rasmeanp[i]~dnorm(rasmean[i],fitprec)}
-          # for(i in 1:MT){ras[i]~dnorm(rasmeanp[sampl[i]],sigras)}
-          # vsp<-1/sqrt(sigras) ### vs for DOE program
-          # vip<-sd(mult[])/mean(mult[]) ## vi for DOE program
-          # xnewp<-mean(mult[]) ## xnew for Doe program
-        # }
         
         ##################################################################
         ##################################################################
@@ -1305,7 +1132,7 @@ shinyServer(function(input, output,session) {
           
           lineout<-bugs(data=linedata,
                         inits=lineinits,
-                        parameters=c("a","b","wd","wac","mean","wdm","vyp","vsp","mult","vip","xnewp","predm"),   
+                        parameters=c("a","b","wd","wac","mean","vyp","vsp","mult","vip","xnewp","predm"),   
                         model.file=linemodel,
                         n.iter = input$niters, n.burnin = input$nburnin, n.thin = 10,n.chains = 1)#,debug=T)    
         })
@@ -1343,13 +1170,7 @@ shinyServer(function(input, output,session) {
         
         outwac=lineout$mean$wac
         eta<-lineout$sd$wac/lineout$mean$wac
-        
-        if(standard()==1){
-          lwac<-rep(outwac,NR)
-        }else {
-          lwac<-rep(outwac,1)
-        }
-        
+        lwac<-rep(outwac,NR)
         
         
         ############ calculates the rsq
@@ -1364,7 +1185,7 @@ shinyServer(function(input, output,session) {
         bayesres=lineout$sims.list$wd
         
         credible_interval=quantile(bayesres,c((1-input$coverage)/2, (1+input$coverage)/2))
-        
+       
         bind <-list(wadm=input$wadm,uwad=input$uwad,
                     u_mid=umids(),u_mad=input$u_mad,
                     u_mids=input$u_mids,u_mdi=input$u_mdi,
@@ -1380,8 +1201,8 @@ shinyServer(function(input, output,session) {
                     xnew=lineout$mean$xnewp
                     #wac=lineout$mean$wac,rux=lineout$sd$wac/lineout$mean$wac
                     
-        )
-        
+                    )
+      
         
         updateTabsetPanel(session = session, inputId = "results",selected = "Fit")
         
@@ -1391,234 +1212,218 @@ shinyServer(function(input, output,session) {
         a<-min(lineout$mean$wac)
         b<-max(lineout$mean$wac)
         
-        #Expected standard deviation of peak area ratios (A:I) 
-        #from a calibration solution; (uy)
-        uyvyp=lineout$sims.list$vyp 
-        vypmin=quantile(uyvyp,0.025) #DOE vsl
-        vypmax=quantile(uyvyp,0.975) #DOE vsu
-        vyll=vypmin      
-        vyuu=vypmax
+        vyll<-lineout$mean$vyp-2*lineout$sd$vyp
+        vyuu<-lineout$mean$vyp+2*lineout$sd$vyp
+        
         vyl<-(vyll)^2
         vyu<-(vyuu)^2
         
         
-        #The Slope of calibration line
-        betab=lineout$sims.list$b 
-        betal<-quantile(betab,0.025)
-        betau<-quantile(betab,0.975)
         
-        #Expected relative standard uncertainty of the concentration ratios
-        #of A:I in the calibration experiment (rux)
+        betal<-lineout$mean$b-2*lineout$sd$b
+        betau<-lineout$mean$b+2*lineout$sd$b
+        
         etall<-min(lineout$sd$wac/lineout$mean$wac) #DOE etal
         etauu<-max(lineout$sd$wac/lineout$mean$wac) #DOE etau
+        
         etal<-(etall)^2
         etau<-(etauu)^2
         
-        #Expected between-sample variability (standard deviation) of peak area ratios 
-        #(A:I) from the quantitation experiment(us)
-        usvsp=lineout$sims.list$vsp
-        vspmin=quantile(usvsp,0.025) #DOE vsl
-        vspmax=quantile(usvsp,0.975) #DOE vsu
-        vsll=vspmin      
-        vsuu=vspmax
-        vsl<-(vsll)^2
-        vsu<-(vsuu)^2
+        vsll<-lineout$mean$vsp-2*lineout$sd$vsp #DOE vsl
+        vsuu<-lineout$mean$vsp+2*lineout$sd$vsp #DOE vsu
         
         vxll<-c("user's input")     #DOE vxl
         vxuu<-c("user's input")    #DOE vxu
+        vsl<-(vsll)^2
+        vsu<-(vsuu)^2
         
-        
-        #The expected approximate value of the measurand,quantity of A
         xnew<-lineout$mean$xnewp 
         
-        #Expected relative standard uncertainty of the concentration of I in samples 
-        #measured for the quantitation experiment; (ui)
-        uivip=lineout$sims.list$vip
-        vipmin=quantile(uivip,0.025)
-        vipmax=quantile(uivip,0.975)
-        vill=vipmin      
-        viuu=vipmax
+        vill<-lineout$mean$vip-2*lineout$sd$vip #DOE vil
+        viuu<-lineout$mean$vip+2*lineout$sd$vip #DOE viu
+        
         vil<-(vill)^2
         viu<-(viuu)^2
-        
         ##doe inputs
         expout<-list(
-          xnew=xnew,slope_min=betal,slope_max=betau,
-          wac_min=a,wac_max=b,
-          Uy_min=vyll,Uy_max=vyuu,rux_min=etall,rux_max=etauu,
-          Us_min=vsll,Us_max=vsuu,Ui_min=vill,Ui_max=viuu)
+                     xnew=xnew,slope_min=betal,slope_max=betau,
+                     wac_min=a,wac_max=b,
+                     Uy_min=vyll,Uy_max=vyuu,rux_min=etall,rux_max=etauu,
+                     Us_min=vsll,Us_max=vsuu,Ui_min=vill,Ui_max=viuu)
         
         if(input$exp){
           
-          
+        
           
           vxll<-c("user's input")     #DOE vxl
           vxuu<-c("user's input")    #DOE vxu
           ######### inputs through the shiny interface#########################
           #   if(N_tables==1){ 
-          
-          
+       
+
           totn<-input$doetotn
           std<-input$doestd
           vxl<-(input$vxl)^2      #DOE vxl
           vxu<-(input$vxu)^2     #DOE vxu
           
+        
+        
+          
+        ## required maximum relative std of the answer
+        ###################################################################
+        ### R code
+        caln<-c(4,6,8,10,12,14,15,16,18,20,22,24,28,30,36,40,44,48)
+        
+        out<-NULL
+        designh1<-expdesign2(caln[1],totn,a,b,vyu,vxu,betau,etau,vsu,xnew,viu)
+        out<-rbind(out,c(as.integer(designh1$optI),designh1$optJ,designh1$optr,designh1$optnr,designh1$optstd))
+        for(i in 2:18){if(out[i-1,5]>std){
+          designh<-expdesign2(caln[i],totn,a,b,vyu,vxu,betau,etau,vsu,xnew,viu)
+          out<-rbind(out,c(as.integer(designh$optI),designh$optJ,designh$optr,designh$optnr,designh$optstd)) 
+        }else{break}}
+        
+        outng<-NULL
+        outng<-out
+        outg<-NULL
+        while(dim(out)[1]<18){outg<-out
+        totn<-totn-1
+        if(totn==0){break}
+        
+        out<-NULL
+        designh1<-expdesign2(caln[1],totn,a,b,vyu,vxu,betau,etau,vsu,xnew,viu)
+        out<-rbind(out,c(as.integer(designh1$optI),designh1$optJ,designh1$optr,designh1$optnr,designh1$optstd))
+        for(i in 2:18){if(out[i-1,5]>std){
+          designh<-expdesign2(caln[i],totn,a,b,vyu,vxu,betau,etau,vsu,xnew,viu)
+          out<-rbind(out,c(as.integer(designh$optI),designh$optJ,designh$optr,designh$optnr,designh$optstd)) 
+        }else{break}}
+        
+        dimg<-dim(outg)[1]
+        
+        outgood<-outg[outg[,5]<std,] ### this contains the experimental designs that satisfy the std requirement
+        optI<-outgood[1] # optimal number of calibrants
+        optJ<-outgood[2]  # optimal number of replicates
+        optr<-outgood[3]  # optimal number of samples in the quantitation experiment
+        optnr<-outgood[4] # optimal number of replicates per sample
+        optstd<-outgood[5] # optimal expected relative standard deviation of the response
+        
+        optx<-NULL
+        optx[1]<-a
+        optIm1<-optI-1
+        
+        for(i in 1:optIm1){
+          optx[i+1]<-a+i*(b-a)/optIm1}}
+        
+        dimng<-dim(outng)[1]
+        
+        
+        
+      #  hide_waiter()
+       
+        if(outng[dimng,5]>std){
+          ################to be printed in shiny#################
+          
+          #######################################################
+          outbest<-outng[18,]
+          optIb<-outbest[1]  # number of calibrants
+          optJb<-outbest[2]  # number of replicates
+          optrb<-outbest[3]  # number of samples in the quantitation experiment
+          optnrb<-outbest[4] # number of replicates per sample
+          optstdb<-outbest[5] # the smallest expected relative standard deviation of the response given your totn and std
+          optxb<-NULL
+          optxb[1]<-a
+          optIm1b<-optIb-1
+          for(i in 1:optIm1b){
+            optxb[i+1]<-a+i*(b-a)/optIm1b}
+          
+         
+          #results <- matrix(c(optxb),ncol =length(optxb), nrow = 1)
+          optxb<-t(optxb)
+          optxb.colnames = sapply(1:length(optxb), function(x){paste0("level", x)})
+          colnames(optxb) = c(optxb.colnames)
+          
+          #results2 <- matrix(c(optIb,optJb,optrb,optnrb),ncol=4, nrow = 1)
+          #colnames(results2) <- c("Calibrants","Calibrant replicates","Samples","Sample replicates")
+          results2<-list(Calibrants=optIb,Calibrant_replicates=optJb,Samples=optrb,Sample_replicates=optnrb)
+          optstdb <- matrix(c(optstdb))
+          
+          colnames(optstdb) <- c("SExpected Relative (%) Standard Deviation of Result")
+          
+          output$err<-renderUI({
+            h5("Please increase the total number of  observations otherwise the  experimental design is:",style = "color:red")
+          })
+         # alert<-c("Oops!", "Please increase the total number of  observations otherwise the  possible experimental design is:")
+          
+          
+          # output$Print <- renderTable(optxb,spacing=c( "l"),align="l") ### print in Shiny
+          # output$Print2 <- renderTable(results2,spacing=c( "l"),align="l",digits = 0)
+          # output$Print3 <- renderTable(results3,spacing=c( "l"),align="l")
+         
+          
+          
+          return(list(mcmcout=bayesres,rsq=rsq,outa=outrega,outb=outregb,rac=rac(),result=results2,
+                      optxb=optxb,optstd=optstdb,std=std,message=message,
+                      expout=expout,
+                      wacsd=lineout$sd$wac,expout=expout,waca=a,wacb=b,vyl=vyll,vyu=vyuu,vxl=vxll,vxu=vxuu,
+                      betal=betal,betau=betau,etal=etall,etau=etauu,
+                      vsl=vsll,vsu=vsuu,xnew=xnew,vil=vill,viu=viuu,
+                      outeta=eta,outwac=outwac,outvyp=outvyp,outvsp=outvsp,outvip=outvip,outxnew=outxnew,
+                      wac=lwac,linea=lineout$mean$a,lineb=lineout$mean$b,outwd=outwd,cl=cl,cu=cu))
+       
+         
+       
+          
+        
+          
+
+          ######################################################
+          
+        }else{
+          
+          
+          output$err<-renderUI({
+            HTML("")
+          })
+          
+         # results <- matrix(c(optx),ncol =length(optx), nrow = 1)
+          optx<-t(optx)
+          optx.colnames = sapply(1:length(optx), function(x){paste0("level", x)})
+          colnames(optx) = c( optx.colnames)
+          
+          
+         # results2 <- matrix(c(optI,optJ,optr,optnr),ncol=4, nrow = 1)
+          results2<- list(Calibrants=optI,Calibrant_replicate=optJ,Samples=optr,Sample_replicate=optnr)
+          
+          optstd<-matrix(c(optstd))
+          colnames(optstd)=c("Expected Relative (%) Standard Deviation of Result")
+          #optstd <- list(Standard_deviation=optstd)
           
           
           
-          ## required maximum relative std of the answer
-          ###################################################################
-          ### R code
-          caln<-c(4,6,8,10,12,14,15,16,18,20,22,24,28,30,36,40,44,48)
-          
-          out<-NULL
-          designh1<-expdesign2(caln[1],totn,a,b,vyu,vxu,betau,etau,vsu,xnew,viu)
-          out<-rbind(out,c(as.integer(designh1$optI),designh1$optJ,designh1$optr,designh1$optnr,designh1$optstd))
-          for(i in 2:18){if(out[i-1,5]>std){
-            designh<-expdesign2(caln[i],totn,a,b,vyu,vxu,betau,etau,vsu,xnew,viu)
-            out<-rbind(out,c(as.integer(designh$optI),designh$optJ,designh$optr,designh$optnr,designh$optstd)) 
-          }else{break}}
-          
-          outng<-NULL
-          outng<-out
-          outg<-NULL
-          while(dim(out)[1]<18){outg<-out
-          totn<-totn-1
-          if(totn==0){break}
-          
-          out<-NULL
-          designh1<-expdesign2(caln[1],totn,a,b,vyu,vxu,betau,etau,vsu,xnew,viu)
-          out<-rbind(out,c(as.integer(designh1$optI),designh1$optJ,designh1$optr,designh1$optnr,designh1$optstd))
-          for(i in 2:18){if(out[i-1,5]>std){
-            designh<-expdesign2(caln[i],totn,a,b,vyu,vxu,betau,etau,vsu,xnew,viu)
-            out<-rbind(out,c(as.integer(designh$optI),designh$optJ,designh$optr,designh$optnr,designh$optstd)) 
-          }else{break}}
-          
-          dimg<-dim(outg)[1]
-          
-          outgood<-outg[outg[,5]<std,] ### this contains the experimental designs that satisfy the std requirement
-          optI<-outgood[1] # optimal number of calibrants
-          optJ<-outgood[2]  # optimal number of replicates
-          optr<-outgood[3]  # optimal number of samples in the quantitation experiment
-          optnr<-outgood[4] # optimal number of replicates per sample
-          optstd<-outgood[5] # optimal expected relative standard deviation of the response
-          
-          optx<-NULL
-          optx[1]<-a
-          optIm1<-optI-1
-          
-          for(i in 1:optIm1){
-            optx[i+1]<-a+i*(b-a)/optIm1}}
-          
-          dimng<-dim(outng)[1]
+          # output$Print <- renderTable(results,spacing=c( "l"),align="l") ### print in Shiny
+          # output$Print2 <- renderTable(results2,spacing=c( "l"),align="l",digits = 0)
+          # output$Print3 <- renderTable(results3,spacing=c( "l"),align="l")
           
           
+          return(list(mcmcout=bayesres,rsq=rsq,outa=outrega,outb=outregb,rac=rac(),result=results2,
+                      optxb=optx,optstd=optstd,wacsd=lineout$sd$wac,expout=expout,
+                      waca=a,wacb=b,vyl=vyll,vyu=vyuu,vxl=vxll,vxu=vxuu,
+                      betal=betal,betau=betau,etal=etall,etau=etauu,
+                      vsl=vsll,vsu=vsuu,xnew=xnew,vil=vill,viu=viuu,
+                      outeta=eta,outwac=outwac,outvyp=outvyp,outvsp=outvsp,outvip=outvip,outxnew=outxnew,
+                      wac=lwac,linea=lineout$mean$a,lineb=lineout$mean$b,outwd=outwd,cl=cl,cu=cu))
           
-          #  hide_waiter()
-          
-          if(outng[dimng,5]>std){
-            ################to be printed in shiny#################
-            
-            #######################################################
-            outbest<-outng[18,]
-            optIb<-outbest[1]  # number of calibrants
-            optJb<-outbest[2]  # number of replicates
-            optrb<-outbest[3]  # number of samples in the quantitation experiment
-            optnrb<-outbest[4] # number of replicates per sample
-            optstdb<-outbest[5] # the smallest expected relative standard deviation of the response given your totn and std
-            optxb<-NULL
-            optxb[1]<-a
-            optIm1b<-optIb-1
-            for(i in 1:optIm1b){
-              optxb[i+1]<-a+i*(b-a)/optIm1b}
-            
-            
-            #results <- matrix(c(optxb),ncol =length(optxb), nrow = 1)
-            optxb<-t(optxb)
-            optxb.colnames = sapply(1:length(optxb), function(x){paste0("level", x)})
-            colnames(optxb) = c(optxb.colnames)
-            
-            #results2 <- matrix(c(optIb,optJb,optrb,optnrb),ncol=4, nrow = 1)
-            #colnames(results2) <- c("Calibrants","Calibrant replicates","Samples","Sample replicates")
-            results2<-list(Calibrants=optIb,Calibrant_replicates=optJb,Samples=optrb,Sample_replicates=optnrb)
-            optstdb <- matrix(c(optstdb))
-            
-            colnames(optstdb) <- c("SExpected Relative (%) Standard Deviation of Result")
-            
-            output$err<-renderUI({
-              h5("Please increase the total number of  observations otherwise the  experimental design is:",style = "color:red")
-            })
-            # alert<-c("Oops!", "Please increase the total number of  observations otherwise the  possible experimental design is:")
-            
-            
-            # output$Print <- renderTable(optxb,spacing=c( "l"),align="l") ### print in Shiny
-            # output$Print2 <- renderTable(results2,spacing=c( "l"),align="l",digits = 0)
-            # output$Print3 <- renderTable(results3,spacing=c( "l"),align="l")
-            
-            
-            
-            return(list(mcmcout=bayesres,rsq=rsq,outa=outrega,outb=outregb,rac=rac(),result=results2,
-                        optxb=optxb,optstd=optstdb,std=std,message=message,
-                        expout=expout,
-                        wacsd=lineout$sd$wac,expout=expout,waca=a,wacb=b,vyl=vyll,vyu=vyuu,vxl=vxll,vxu=vxuu,
-                        betal=betal,betau=betau,etal=etall,etau=etauu,
-                        vsl=vsll,vsu=vsuu,xnew=xnew,vil=vill,viu=viuu,
-                        outeta=eta,outwac=outwac,outvyp=outvyp,outvsp=outvsp,outvip=outvip,outxnew=outxnew,
-                        wac=lwac,linea=lineout$mean$a,lineb=lineout$mean$b,outwd=outwd,cl=cl,cu=cu))
-            
-            
-            
-            
-            
-            
-            
-            ######################################################
-            
-          }else{
-            
-            
-            output$err<-renderUI({
-              HTML("")
-            })
-            
-            # results <- matrix(c(optx),ncol =length(optx), nrow = 1)
-            optx<-t(optx)
-            optx.colnames = sapply(1:length(optx), function(x){paste0("level", x)})
-            colnames(optx) = c( optx.colnames)
-            
-            
-            # results2 <- matrix(c(optI,optJ,optr,optnr),ncol=4, nrow = 1)
-            results2<- list(Calibrants=optI,Calibrant_replicate=optJ,Samples=optr,Sample_replicate=optnr)
-            
-            optstd<-matrix(c(optstd))
-            colnames(optstd)=c("Expected Relative (%) Standard Deviation of Result")
-            #optstd <- list(Standard_deviation=optstd)
-            
-            
-            
-            # output$Print <- renderTable(results,spacing=c( "l"),align="l") ### print in Shiny
-            # output$Print2 <- renderTable(results2,spacing=c( "l"),align="l",digits = 0)
-            # output$Print3 <- renderTable(results3,spacing=c( "l"),align="l")
-            
-            
-            return(list(mcmcout=bayesres,rsq=rsq,outa=outrega,outb=outregb,rac=rac(),result=results2,
-                        optxb=optx,optstd=optstd,wacsd=lineout$sd$wac,expout=expout,
-                        waca=a,wacb=b,vyl=vyll,vyu=vyuu,vxl=vxll,vxu=vxuu,
-                        betal=betal,betau=betau,etal=etall,etau=etauu,
-                        vsl=vsll,vsu=vsuu,xnew=xnew,vil=vill,viu=viuu,
-                        outeta=eta,outwac=outwac,outvyp=outvyp,outvsp=outvsp,outvip=outvip,outxnew=outxnew,
-                        wac=lwac,linea=lineout$mean$a,lineb=lineout$mean$b,outwd=outwd,cl=cl,cu=cu))
-            
-            #######################################################
-          }
-          
+          #######################################################
         }
         
+        }
         
-        return(list(mcmcout=bayesres,bind=bind,rsq=rsq,outa=outrega,outb=outregb,rac=rac(),wacsd=lineout$sd$wac,
-                    waca=a,wacb=b,vyl=vyll,vyu=vyuu,vxl=vxll,vxu=vxuu,expout=expout,
-                    betal=betal,betau=betau,etal=etall,etau=etauu,
-                    vsl=vsll,vsu=vsuu,xnew=xnew,vil=vill,viu=viuu,
+       
+         return(list(mcmcout=bayesres,bind=bind,rsq=rsq,outa=outrega,outb=outregb,
+                     meana=lineout$mean$a,
+                     rac=rac(),wacsd=lineout$sd$wac,
+                     waca=a,wacb=b,vyl=vyll,vyu=vyuu,vxl=vxll,vxu=vxuu,expout=expout,
+                     betal=betal,betau=betau,etal=etall,etau=etauu,
+                     vsl=vsll,vsu=vsuu,xnew=xnew,vil=vill,viu=viuu,
                     outeta=eta,outwac=outwac,outvyp=outvyp,outvsp=outvsp,outvip=outvip,outxnew=outxnew,
                     wac=lwac,linea=lineout$mean$a,lineb=lineout$mean$b,outwd=outwd,cl=cl,cu=cu))
         
@@ -1641,14 +1446,7 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              
-              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-                csv[[i]]<- read.csv(input$calfile$datapath[i])}
-              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-                csv[[i]] <- read.xlsx(input$calfile$datapath[i],1)
-              }
-              
+              csv[[i]]=read.csv(input$calfile$datapath[i])
               
             }
             
@@ -1669,12 +1467,7 @@ shinyServer(function(input, output,session) {
             csv=list()
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-                csv[[i]]<- read.csv(input$samplefile$datapath[i])}
-              else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                csv[[i]] <- read.xlsx(input$samplefile$datapath[i],1)
-              }
+              csv[[i]]=read.csv(input$samplefile$datapath[i])
               
             }
             
@@ -1704,12 +1497,8 @@ shinyServer(function(input, output,session) {
             return(NULL)
           }else{
             
-            if(stringr::str_ends(inFile$datapath[1], "csv")) {
-              tmp<- read.csv(inFile$datapath[1])}
-            else if(stringr::str_ends(inFile$datapath[1], "xlsx")) {
-              tmp <- read.xlsx(inFile$datapath[1],1)
-            }
             
+            tmp<- read.csv(inFile$datapath[1])
             
             return(max(tmp$wsol))# #working solutions from  calibrationtable
             
@@ -1729,28 +1518,23 @@ shinyServer(function(input, output,session) {
           {
             
             if (standard()==1){
-              nfile<<-nrow(input$calfile)
-              
-              return(c(rep(input$u_mid,nfile)))
+            nfile<<-nrow(input$calfile)
+            
+            return(c(rep(input$u_mid,nfile)))
             }else {
               nfile<<-nrow(input$calfile)
-              return(c(rep(0.000015,nfile)))
+              return(c(rep(1,nfile)))
             }
             
             
           }
         })
         
-        umads<-reactive({
+        umads<<-reactive(
           
-          if(standard()==1){
-            return(c(rep(input$u_mad,nfile)))
-          }else{
-            return(c(rep(0.000015,nfile)))
-            
-          }
+          return(c(rep(input$u_mad,nfile)))
           
-        })
+        )
         
         
         ####
@@ -1789,14 +1573,7 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              
-              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-                nr<- nrow(read.csv(input$calfile$datapath[i]))}
-              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-                nr<- nrow(read.xlsx(input$calfile$datapath[i],1))
-              }
-              
+              nr= nrow(read.csv(input$calfile$datapath[i]))
               expc[[i]]<-(c(rep(1*i,each=nr)))
               expc[[i]]<-t(expc[[i]])
             } 
@@ -1811,19 +1588,19 @@ shinyServer(function(input, output,session) {
         })
         
         
-        
-        
-        midsm<<-reactive({
+       
           
+        midsm<<-reactive({
+         
           if(standard()==1){
-            return(caldata()$mid)
-            
-          }else{
-            
-            return(caldata()$mad/caldata()$mad)
-          }
-        })
+           return(caldata()$mid)
+          
+        }else{
         
+            return(caldata()$mad/caldata()$mad)
+        }
+          })
+       
         
         madsm<<-reactive(
           caldata()$mad
@@ -1847,13 +1624,7 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-                tmp[[i]]<- read.csv(input$calfile$datapath[i])}
-              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-                tmp[[i]] <- read.xlsx(input$calfile$datapath[i],1)
-              }
-              
+              tmp[[i]]=read.csv(input$calfile$datapath[i])
               
             }
             
@@ -1882,20 +1653,8 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-                nr<- nrow(read.csv(input$calfile$datapath[i]))
-                nrac<-ncol(read.csv(input$calfile$datapath[i]))-3
-              }
-              
-              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-                
-                nr<- nrow(read.xlsx(input$calfile$datapath[i],1))
-                nrac<-ncol(read.xlsx(input$calfile$datapath[i],1))-3
-                
-              }
-              
-              
+              nr<<-nrow(read.csv(input$calfile$datapath[i]))
+              nrac<-ncol(read.csv(input$calfile$datapath[i]))-3
               n1<-nr*nrac
               expc1[[i]]<-matrix(c(rep(1*i,each=n1)))
               
@@ -1919,18 +1678,8 @@ shinyServer(function(input, output,session) {
             
             csv=list()
             
-            
-            if(stringr::str_ends(input$calfile$datapath[1], "csv")) {
-              k<-nrow(read.csv(input$calfile$datapath[1]))
-              nrac<-ncol(read.csv(input$calfile$datapath[1]))-3
-            }
-            else if(stringr::str_ends(input$calfile$datapath[1], "xlsx")) {
-              k<-nrow(read.xlsx(input$calfile$datapath[1],1))
-              nrac<-ncol(read.xlsx(input$calfile$datapath[1],1))-3
-            }
-            
-            #k<-nrow(read.csv(input$calfile$datapath[1]))
-            #nrac<-ncol(read.csv(input$calfile$datapath[1]))-3
+            k<-nrow(read.csv(input$calfile$datapath[1]))
+            nrac<-ncol(read.csv(input$calfile$datapath[1]))-3
             
             
             csv[[1]]=c(rep(1:k,nrac))
@@ -1940,18 +1689,7 @@ shinyServer(function(input, output,session) {
             {
               
               c=max(csv[[i-1]])+1
-              
-              
-              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-                x<- nrow(read.csv(input$calfile$datapath[i]))}
-              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-                x <- nrow(read.xlsx(input$calfile$datapath[i],1))
-              }
-              
-              #x=nrow(read.csv(input$calfile$datapath[i]))
-              
-              
-              
+              x=nrow(read.csv(input$calfile$datapath[i]))
               y=c+x-1
               csv[[i]]=c(rep(c:y, nrac))
               
@@ -1980,13 +1718,7 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$calfile$datapath[i])}
-              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$calfile$datapath[i],1)
-              }
-              #csv[[i]]=read.csv(input$calfile$datapath[i])
+              csv[[i]]=read.csv(input$calfile$datapath[i])
               csv[[i]][1:3]<-NULL
             }
             
@@ -2008,15 +1740,7 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              
-              
-              if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$samplefile$datapath[i])}
-              else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$samplefile$datapath[i],1)
-              }
-              
+              csv[[i]]=read.csv(input$samplefile$datapath[i])
               csv[[i]][1:2]<-NULL
             }
             
@@ -2036,12 +1760,12 @@ shinyServer(function(input, output,session) {
         midsi<<-reactive(
           
           if(standard()==1){
-            return(sampledata()$mids)
-          }else{
+          return(sampledata()$mids)
+        }else{
+          
+         return(sampledata()$mdi/sampledata()$mdi)
             
-            return(sampledata()$mdi/sampledata()$mdi)
-            
-          }
+        }
         )
         
         MT<<-reactive(
@@ -2061,17 +1785,8 @@ shinyServer(function(input, output,session) {
             tmp=list()
             
             for(i in 1: nfile)
-              
-              
             {
-              
-              if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-                tmp[[i]]=read.csv(input$samplefile$datapath[i])}
-              else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                tmp[[i]]=read.xlsx(input$samplefile$datapath[i],1)
-              }
-              
-              #tmp[[i]]=read.csv(input$samplefile$datapath[i])
+              tmp[[i]]=read.csv(input$samplefile$datapath[i])
               
             }
             
@@ -2098,13 +1813,7 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-                nr= nrow(read.csv(input$samplefile$datapath[i]))}
-              else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                nr= nrow(read.xlsx(input$samplefile$datapath[i],1))
-              }
-              # nr= nrow(read.csv(input$samplefile$datapath[i]))
+              nr= nrow(read.csv(input$samplefile$datapath[i]))
               exp[[i]]<-(c(rep(1*i,each=nr)))
               exp[[i]]<-t(exp[[i]])
             } 
@@ -2130,18 +1839,8 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-                nr<<-nrow(read.csv(input$samplefile$datapath[i]))
-                nrac<-ncol(read.csv(input$samplefile$datapath[i]))-2
-              }
-              else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                nr<<-nrow(read.xlsx(input$samplefile$datapath[i],1))
-                nrac<-ncol(read.xlsx(input$samplefile$datapath[i],1))-2
-              }
-              
-              # nr<<-nrow(read.csv(input$samplefile$datapath[i]))
-              #nrac<-ncol(read.csv(input$samplefile$datapath[i]))-2
+              nr<<-nrow(read.csv(input$samplefile$datapath[i]))
+              nrac<-ncol(read.csv(input$samplefile$datapath[i]))-2
               n1<-nr*nrac
               expr[[i]]<-matrix(c(rep(1*i,each=n1)))
               
@@ -2165,16 +1864,8 @@ shinyServer(function(input, output,session) {
             
             csv=list()
             
-            if(stringr::str_ends(input$samplefile$datapath[1], "csv")) {
-              k<-nrow(read.csv(input$samplefile$datapath[1]))
-              nras<-ncol(read.csv(input$samplefile$datapath[1]))-2
-            }
-            else if(stringr::str_ends(input$samplefile$datapath[1], "xlsx")) {
-              k<-nrow(read.xlsx(input$samplefile$datapath[1],1))
-              nras<-ncol(read.xlsx(input$samplefile$datapath[1],1))-2
-            }
-            # k<-nrow(read.csv(input$samplefile$datapath[1]))
-            #nras<-ncol(read.csv(input$samplefile$datapath[1]))-2
+            k<-nrow(read.csv(input$samplefile$datapath[1]))
+            nras<-ncol(read.csv(input$samplefile$datapath[1]))-2
             
             
             csv[[1]]=c(rep(1:k,nras))
@@ -2184,15 +1875,7 @@ shinyServer(function(input, output,session) {
             {
               
               c=max(csv[[i-1]])+1
-              
-              if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-                x=nrow(read.csv(input$samplefile$datapath[i]))}
-              else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                x=nrow(read.xlsx(input$samplefile$datapath[i],1))
-              }
-              # x=nrow(read.csv(input$samplefile$datapath[i]))
-              
-              
+              x=nrow(read.csv(input$samplefile$datapath[i]))
               y=c+x-1
               csv[[i]]=c(rep(c:y, nras))
               
@@ -2217,16 +1900,8 @@ shinyServer(function(input, output,session) {
         nrac<-reactive({
           
           if (!is.null(input$calfile))
-            
           {
-            
-            if(stringr::str_ends(input$calfile$datapath[1], "csv")) {
-              nrac<-ncol(read.csv(input$calfile$datapath[1]))-3
-            }
-            else if(stringr::str_ends(input$calfile$datapath[1], "xlsx")) {
-              nrac<-ncol(read.xlsx(input$calfile$datapath[1],1))-3
-            }
-            #nrac<-ncol(read.csv(input$calfile$datapath[1]))-3
+            nrac<-ncol(read.csv(input$calfile$datapath[1]))-3
             
           }
         })
@@ -2238,18 +1913,7 @@ shinyServer(function(input, output,session) {
             
             vec=list()
             for(i in 1: nfile){
-              
-              
-              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-                vec[[i]]<-nrow(read.csv(input$calfile$datapath[i]))
-              }
-              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-                vec[[i]]<-nrow(read.xlsx(input$calfile$datapath[i],1))
-              }
-              
-              #vec[[i]]<-nrow(read.csv(input$calfile$datapath[i]))
-              
-              
+              vec[[i]]<-nrow(read.csv(input$calfile$datapath[i]))
             }
             return(vec)
           }
@@ -2262,14 +1926,7 @@ shinyServer(function(input, output,session) {
             
             vec=list()
             for(i in 1: nfile){
-              
-              if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-                vec[[i]]<-nrow(read.csv(input$samplefile$datapath[i]))
-              }
-              else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                vec[[i]]<-nrow(read.xlsx(input$samplefile$datapath[i],1))
-              }
-              # vec[[i]]<-nrow(read.csv(input$samplefile$datapath[i]))
+              vec[[i]]<-nrow(read.csv(input$samplefile$datapath[i]))
             }
             return(vec)
           }
@@ -2284,15 +1941,7 @@ shinyServer(function(input, output,session) {
             
             vecrac=list()
             for(i in 1: nfile){
-              
-              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-                vecrac[[i]]<-nrac()*nrow(read.csv(input$calfile$datapath[i]))
-              }
-              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-                vecrac[[i]]<-nrac()*nrow(read.xlsx(input$calfile$datapath[i],1))
-              }
-              
-              #vecrac[[i]]<-nrac()*nrow(read.csv(input$calfile$datapath[i]))
+              vecrac[[i]]<-nrac()*nrow(read.csv(input$calfile$datapath[i]))
             }
             return(vecrac)
           }
@@ -2305,14 +1954,7 @@ shinyServer(function(input, output,session) {
             
             vecras=list()
             for(i in 1: nfile){
-              
-              if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-                vecrac[[i]]<-nrac()*nrow(read.csv(input$samplefile$datapath[i]))
-              }
-              else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                vecrac[[i]]<-nrac()*nrow(read.xlsx(input$samplefile$datapath[i],1))
-              }
-              # vecras[[i]]<-nrac()*nrow(read.csv(input$samplefile$datapath[i]))
+              vecras[[i]]<-nrac()*nrow(read.csv(input$samplefile$datapath[i]))
             }
             return(vecras)
           }
@@ -2383,7 +2025,7 @@ shinyServer(function(input, output,session) {
             xins[i]~dnorm(0,0.0016)%_%I(0.001,)
             chsqns[i]~dgamma(0.5,0.5)
             fitprec[i]<-xins[i]/sqrt(chsqns[i])
-            
+           
             
           }
           
@@ -2428,7 +2070,7 @@ shinyServer(function(input, output,session) {
           }
           
           for(i in 1:NS){
-            
+           
             vsp[i]<-1/sqrt(sigras[i])
             vyp[i]<-1/sqrt(fitprec[i])
           }
@@ -2551,25 +2193,27 @@ shinyServer(function(input, output,session) {
           vilmean[[i]]=mean(vipp[[i]])
           vilsd[[i]]=sd(vipp[[i]])
           
-          # vill[[i]]=min(vipp[[i]])
-          # viuu[[i]]=max(vipp[[i]])
-          vill[[i]]=quantile(vipp[[i]],0.025)
-          viuu[[i]]=quantile(vipp[[i]],0.975)
+          vill[[i]]=vilmean[[i]]-2*vilsd[[i]]
+          viuu[[i]]=vilmean[[i]]+2*vilsd[[i]]
           xnew[[i]]=mean(mult[[i]])
         }
         
-      
+        # vill<-unlist(vill)
+        # viuu<-unlist(viuu)
+        # vilmean(unlist(vilmean))
+        # 
+        # vilsd(unlist(vilsd))
         outvip<-data.frame(mean=unlist(vilmean),sd=(unlist(vilsd)))
         #outvip<-data.frame(mean=vilmean,sd=vilsd)
         outxnew<-data.frame(mean=unlist(xnew))
         #### Output wac
-        mulwac=outwac
+         mulwac=outwac
         # 
         # 
         mulwac<-split(mulwac,rep(1:nfile,vecwac()))
         mulwac<-sapply(mulwac, `[`, seq_len(max(lengths(mulwac))))
         outwac<-matrix(mulwac,ncol = nfile,nrow = N)
-        
+
         output$wac<-renderTable(mulwac)
         #mulwac[is.na(mulwac)] <- ""
         #output multi eta
@@ -2601,7 +2245,7 @@ shinyServer(function(input, output,session) {
                     vsp=outvsp,
                     vip=outvip,
                     xnew=unlist(xnew)
-                    # mult=outmult
+                   # mult=outmult
                     
         )
         
@@ -2623,8 +2267,6 @@ shinyServer(function(input, output,session) {
         waca<-list()
         wacb<-list()
         vxll<-list()
-        vsll= list()
-        vyll= list()
         vxuu<-list()
         waca<-list()
         etalll<-list()
@@ -2640,42 +2282,27 @@ shinyServer(function(input, output,session) {
           etauuu[i]=max(rux[[i]])
           
         }
+      
+        
+        vyll<-lineout$mean$vyp-2*lineout$sd$vyp
+        vylll<-lineout$mean$vyp-2*lineout$sd$vyp
+        vyuu<-lineout$mean$vyp+2*lineout$sd$vyp
+        vyuuu<-lineout$mean$vyp+2*lineout$sd$vyp
      
-     
+        betal<-lineout$mean$b-2*lineout$sd$b
+        betall<-lineout$mean$b-2*lineout$sd$b
+        betau<-lineout$mean$b+2*lineout$sd$b
+        betauu<-lineout$mean$b+2*lineout$sd$b
         
-         vyll<-lineout$mean$vyp-1.96*lineout$sd$vyp
-        
-        
-        if(vyll<=0){
-          vyll=0
-        }
-         vylll<-vyll
-         
-        vyuu<-lineout$mean$vyp+1.96*lineout$sd$vyp
-        vyuuu<-lineout$mean$vyp+1.96*lineout$sd$vyp
-        
-        betal<-lineout$mean$b-1.96*lineout$sd$b
-        betall<-lineout$mean$b-1.96*lineout$sd$b
-        
-        betau<-lineout$mean$b+1.96*lineout$sd$b
-        betauu<-lineout$mean$b+1.96*lineout$sd$b
-        
-        
+       
         vxll<-c("user's input")     #DOE vxl
         vxuu<-c("user's input")    #DOE vxu
-        
-      
-        vsll<-lineout$mean$vsp-1.96*lineout$sd$vsp #DOE vsl
-        
-            if(vsll<=0){
-             vsll=0
-            }
-        
-        vslll<-vsll #DOE vsl
-        
-        vsuu<-lineout$mean$vsp+1.96*lineout$sd$vsp #DOE vsu
-        vsuuu<-lineout$mean$vsp+1.96*lineout$sd$vsp #DOE vsu
-        
+       
+        vsll<-lineout$mean$vsp-2*lineout$sd$vsp #DOE vsl
+        vslll<-lineout$mean$vsp-2*lineout$sd$vsp #DOE vsl
+        vsuu<-lineout$mean$vsp+2*lineout$sd$vsp #DOE vsu
+        vsuuu<-lineout$mean$vsp+2*lineout$sd$vsp #DOE vsu
+    
         
         xneww<-outxnew
         
@@ -2684,13 +2311,13 @@ shinyServer(function(input, output,session) {
           xnew=unlist(xnew),
           slope_min=betal,slope_max=betau,
           wac_min=unlist(waca),wac_max=unlist(wacb),
-          Uy_min=unlist(vylll),Uy_max=unlist(vyuuu),rux_min=unlist(etalll),rux_max=unlist(etauuu),
-          Us_min=unlist(vslll),Us_max=unlist(vsuuu),Ui_min=unlist(vill),Ui_max=unlist(viuu)
-        )
+           Uy_min=unlist(vylll),Uy_max=unlist(vyuuu),rux_min=unlist(etalll),rux_max=unlist(etauuu),
+           Us_min=unlist(vslll),Us_max=unlist(vsuuu),Ui_min=unlist(vill),Ui_max=unlist(viuu)
+          )
         
         if(input$exp){
           ###download
-          
+         
           
           vxll<-c("user's input")     #DOE vxl
           vxuu<-c("user's input")    #DOE vxu
@@ -2701,7 +2328,7 @@ shinyServer(function(input, output,session) {
           )
           
           if(doe1()==1){
-            
+           
             totn<-input$doetotn
             std<-input$doestd
             a=waca[[1]]
@@ -2718,7 +2345,7 @@ shinyServer(function(input, output,session) {
             betal=betal[[1]]
             
             betau=betau[[1]]
-            
+           
             etal=(etalll[[1]])^2
             
             etau=(etauuu[[1]])^2
@@ -2728,7 +2355,7 @@ shinyServer(function(input, output,session) {
             vsu=(vsuu[[1]])^2
             
             xnew=xnew[[1]]
-            
+          
             vil=(vill[[1]])^2
             viu=(viuu[[1]])^2
             
@@ -2840,7 +2467,7 @@ shinyServer(function(input, output,session) {
               optstd <- matrix(c(optstd))
               colnames(optstd) <- c("Expected Relative (%) Standard Deviation of Result")
               
-              # optstd <- list(Standard_deviation=optstd)
+             # optstd <- list(Standard_deviation=optstd)
               
               return(list(mcmcout=bayesres,rsq=n_rsq,
                           outvyp=outvyp,bind=bind,expout=expout,
@@ -2851,13 +2478,13 @@ shinyServer(function(input, output,session) {
                           rac=lrac,wac=lwac,outwac=outwac,outeta=outeta,outvip=outvip,outxnew=outxnew,outa=outrega,outaa=lineout$mean$a,outbb=lineout$mean$b,outb=outregb,cl=cl,cu=cu,
                           outvsp=outvsp,outwd=outwd,outmult=outmult))
               
-              
+            
               #######################################################
             }
             
             
-            
-            
+        
+             
           }else{
             
             totn<-input$doetotn
@@ -2967,7 +2594,7 @@ shinyServer(function(input, output,session) {
               #colnames(results2) <- c("Calibrants","Calibrant replicates","Samples","Sample replicates")
               results2<-list(Calibrants=optIb,Calibrant_replicates=optJb,Samples=optrb,Sample_replicates=optnrb)
               #results3 <- matrix(c(optstdb))
-              # optstdb<-list(Standard_devaiation=optstdb)
+             # optstdb<-list(Standard_devaiation=optstdb)
               #  colnames(results3) <- c("Standard Deviation")
               
               optstdb <- matrix(c(optstdb))
@@ -3023,8 +2650,8 @@ shinyServer(function(input, output,session) {
           
           
         }
-        
-        
+       
+       
         
         
         return(list(mcmcout=bayesres,rsq=n_rsq,
@@ -3038,7 +2665,7 @@ shinyServer(function(input, output,session) {
       }
       
     }else{
-      
+     
       
       
       ####RF model
@@ -3052,13 +2679,7 @@ shinyServer(function(input, output,session) {
           else
           {
             csv=list()
-            if(stringr::str_ends(input$calfile$datapath[1], "csv")) {
-              csv=read.csv(input$calfile$datapath[1])
-            }
-            else if(stringr::str_ends(input$calfile$datapath[1], "xlsx")) {
-              csv=read.xlsx(input$calfile$datapath[1],1)
-            }
-            #csv=read.csv(input$calfile$datapath[1])
+            csv=read.csv(input$calfile$datapath[1])
             return(csv)   
           }
           
@@ -3074,13 +2695,7 @@ shinyServer(function(input, output,session) {
           {
             
             csv=list()
-            if(stringr::str_ends(input$samplefile$datapath[1], "csv")) {
-              csv=read.csv(input$samplefile$datapath[1])
-            }
-            else if(stringr::str_ends(input$samplefile$datapath[1], "xlsx")) {
-              csv=read.xlsx(input$samplefile$datapath[1],1)
-            }
-            #csv=read.csv(input$samplefile$datapath[1])
+            csv=read.csv(input$samplefile$datapath[1])
             return(csv)
           }
           
@@ -3107,12 +2722,7 @@ shinyServer(function(input, output,session) {
             return(NULL)
           }else{
             
-            if(stringr::str_ends(inFile$datapath[1], "csv")) {
-              tmp<- read.csv(inFile$datapath[1])}
-            else if(stringr::str_ends(inFile$datapath[1], "xlsx")) {
-              tmp <- read.xlsx(inFile$datapath[1],1)
-            }
-            # tmp<- read.csv(inFile$datapath[1])
+            tmp<- read.csv(inFile$datapath[1])
             
             return(max(tmp$wsol))# #working solutions from  calibrationtable
             
@@ -3126,26 +2736,30 @@ shinyServer(function(input, output,session) {
         
         umids<-reactive({
           
-          if(standard()==1){
-            return(c(rep(input$u_mid,nfile)))
-          }else{
-            return(c(rep(0.000015,nfile)))
+          if (is.null(input$calfile))
+            return()
+          else
+          {
+            
+            if (standard()==1){
+              
+              return(input$u_mid)
+            }else {
+              
+              return(1)
+            }
+            
             
           }
-          
         })
         
+       
+        umads<-reactive(
+
+          return(input$u_mad)
+
+        )
         
-        umads<-reactive({
-          
-          if(standard()==1){
-            return(c(rep(input$u_mad,nfile)))
-          }else{
-            return(c(rep(0.000015,nfile)))
-            
-          }
-          
-        })
         
         ####
         
@@ -3175,32 +2789,21 @@ shinyServer(function(input, output,session) {
         
         
         midsm<-reactive(
-          if (standard()==1){
-            return(c(rep(caldata()$mid,NR)))
+          
+          if(standard()==1){
+          return(caldata()$mid)
           }else{
-            
-            return(c(rep(caldata()$mad/caldata()$mad,NR)))
-            
+            return(caldata()$mad/caldata()$mad)
           }
         )
-        
         madsm<-reactive(
-          
-          if (standard()==1){
-            caldata()$mad
-          }else{
-            return(c(rep(caldata()$mad,NR)))
-          }
+          caldata()$mad
         )
         
         wsol<-reactive(
-          if (standard()==1){
-            caldata()$wsol
-          }else {
-            
-            return(c(rep(caldata()$wsol,NR)))
-          }
+          caldata()$wsol
         )
+        
         
         rac<- reactive({
           
@@ -3213,14 +2816,7 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$calfile$datapath[i])
-              }
-              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$calfile$datapath[i],1)
-              }
-              #csv[[i]]=read.csv(input$calfile$datapath[i])
+              csv[[i]]=read.csv(input$calfile$datapath[i])
               csv[[i]][1:3]<-NULL
             }
             
@@ -3242,14 +2838,7 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$samplefile$datapath[i])
-              }
-              else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$samplefile$datapath[i],1)
-              }
-              #csv[[i]]=read.csv(input$samplefile$datapath[i])
+              csv[[i]]=read.csv(input$samplefile$datapath[i])
               csv[[i]][1:2]<-NULL
             }
             
@@ -3261,28 +2850,20 @@ shinyServer(function(input, output,session) {
         
         mdi<-reactive(
           
-          if (standard()==1){
-            
-            return(sampledata()$mdi)
-            
-          }else {
-            return(c(rep(sampledata()$mdi,NR)))
-            
-          } 
+          sampledata()$mdi
+          
         )
         
-        
-        midsi<-reactive(
+        midsi<<-reactive(
           
           if(standard()==1){
-            sampledata()$mids
+            return(sampledata()$mids)
           }else{
-            return(c(rep(sampledata()$mdi/sampledata()$mdi,NR)))
+            
+            return(sampledata()$mdi/sampledata()$mdi)
+            
           }
-          
         )
-        
-        
         
         MT<-reactive(
           
@@ -3293,41 +2874,13 @@ shinyServer(function(input, output,session) {
         
         
         sol<-reactive({
-          
-          if(standard()==1){
-            return(rep(1:N,NR))
-          }else {
-            
-            return(rep(1:(N*NR)))
-          }
-          
+          rep(1:N,NR)
         })
-        
         
         sampl<-reactive({
+          rep(1:M,NR)
           
-          if(standard()==1){
-            rep(1:M,NR)
-          }else {
-            return(rep(1:(M*NR)))
-          }
         })   
-        NF<-reactive({
-          if(standard()==1){
-            return(N)
-          }else {
-            return(N*NR)
-          }
-        })
-        
-        MF<-reactive({
-          if(standard()==1){
-            return(M)
-          }else {
-            return(M*MR)
-          }
-        })
-        
         
         
         #####
@@ -3345,13 +2898,15 @@ shinyServer(function(input, output,session) {
           wadm= wadm(),
           uwad=uwad(),
           NWS=NWS()+1,
-          N=NF(),
-          M=MF(),
+          N=N,
+          M=M,
           MT=MT(),
           NT=NT(),
           sol=sol(),
+          NR=NR,
           sampl=sampl()
         )
+        
         
         # 
         require(R2OpenBUGS)
@@ -3469,12 +3024,7 @@ shinyServer(function(input, output,session) {
         wacm=lineout$mean$wacm #avarage of the wac
         outwac=lineout$mean$wac 
         eta<-lineout$sd$wac/lineout$mean$wac
-        
-        if(standard()==1){
-          lwac<-rep(outwac,NR)
-        }else {
-          lwac<-rep(outwac,1)
-        }
+        lwac<-rep(outwac,NR)
         
         
         ############ calculates the rsq
@@ -3513,62 +3063,38 @@ shinyServer(function(input, output,session) {
         
         ##### Run DOE Module
         
+        
         a<-min(lineout$mean$wac)
         b<-max(lineout$mean$wac)
         
-        #Expected standard deviation of peak area ratios (A:I) 
-        #from a calibration solution; (uy)
-        uyvyp=lineout$sims.list$vyp 
-        vypmin=quantile(uyvyp,0.025) #DOE vsl
-        vypmax=quantile(uyvyp,0.975) #DOE vsu
-        vyll=vypmin      
-        vyuu=vypmax
+        vyll<-lineout$mean$vyp-2*lineout$sd$vyp
+        vyuu<-lineout$mean$vyp+2*lineout$sd$vyp
         vyl<-(vyll)^2
         vyu<-(vyuu)^2
         
-        #Expected standard uncertainty of the concentration ratios of 
-        #A:I in the calibration experiment; (ux)
-        vxll<-c("user's input")      #DOE vxl
+        vxll<-c("user's input")    #DOE vxl
         vxuu<-c("user's input")      #DOE vxu
         
-        #Target calibration region;x-axis range in terms of concentrations
-        #of A:I in the calibration solutions
         wacm<-lineout$mean$wacm
+   
+        betal<-lineout$mean$b-2*lineout$sd$b
+        betau<-lineout$mean$b+2*lineout$sd$b
         
-        #The Slope of  calibration line
-        betab=lineout$sims.list$b
-        betal=quantile(betab,0.025) #min
-        betau=quantile(betab,0.975) #max
-        
-        #Expected relative standard uncertainty of the concentration ratios
-        #of A:I in the calibration experiment (rux)
         etall<-min(lineout$sd$wac/lineout$mean$wac) #DOE etal
         etauu<-max(lineout$sd$wac/lineout$mean$wac) #DOE etau
         
         etal<-(etall)^2
         etau<-(etauu)^2
         
-        #Expected between-sample variability (standard deviation) of peak area ratios 
-        #(A:I) from the quantitation experiment(us)
-        usvsp=lineout$sims.list$vsp
-        vspmin=quantile(usvsp,0.025) #DOE vsl
-        vspmax=quantile(usvsp,0.975) #DOE vsu
-        vsll=vspmin      
-        vsuu=vspmax
-        
+        vsll<-lineout$mean$vsp-2*lineout$sd$vsp #DOE vsl
+        vsuu<-lineout$mean$vsp+2*lineout$sd$vsp #DOE vsu
         vsl<-(vsll)^2
         vsu<-(vsuu)^2
         
-        #The expected approximate value of the measurand,quantity of A
         xnew<-lineout$mean$xnewp 
         
-        #Expected relative standard uncertainty of the concentration of I in samples 
-        #measured for the quantitation experiment; (ui)
-        uivip=lineout$sims.list$vip
-        vipmin=quantile(uivip,0.025)
-        vipmax=quantile(uivip,0.975)
-        vill=vipmin      
-        viuu=vipmax
+        vill<-lineout$mean$vip-2*lineout$sd$vip #DOE vil
+        viuu<-lineout$mean$vip+2*lineout$sd$vip #DOE viu
         vil<-(vill)^2
         viu<-(viuu)^2
         
@@ -3815,14 +3341,7 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$calfile$datapath[i])
-              }
-              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$calfile$datapath[i],1)
-              }
-              #csv[[i]]=read.csv(input$calfile$datapath[i])
+              csv[[i]]=read.csv(input$calfile$datapath[i])
               
             }
             
@@ -3843,14 +3362,7 @@ shinyServer(function(input, output,session) {
             csv=list()
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$samplefile$datapath[i])
-              }
-              else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$samplefile$datapath[i],1)
-              }
-              # csv[[i]]=read.csv(input$samplefile$datapath[i])
+              csv[[i]]=read.csv(input$samplefile$datapath[i])
               
             }
             
@@ -3880,13 +3392,8 @@ shinyServer(function(input, output,session) {
             return(NULL)
           }else{
             
-            if(stringr::str_ends(input$calfile$datapath[1], "csv")) {
-              tmp<- read.csv(input$calfile$datapath[1])
-            }
-            else if(stringr::str_ends(input$calfile$datapath[1], "xlsx")) {
-              tmp<- read.xlsx(input$calfile$datapath[1],1)
-            }
-            #tmp<- read.csv(inFile$datapath[1])
+            
+            tmp<- read.csv(inFile$datapath[1])
             
             return(max(tmp$wsol))# #working solutions from  calibrationtable
             
@@ -3907,29 +3414,25 @@ shinyServer(function(input, output,session) {
             
             if (standard()==1){
               
-              nfile<<-nrow(input$calfile)
-              
-              return(c(rep(input$u_mid,nfile)))
-              
+            nfile<<-nrow(input$calfile)
+            
+            return(c(rep(input$u_mid,nfile)))
+            
             }else{
               nfile<<-nrow(input$calfile)
               
-              return(c(rep(0.000015,nfile)))
+              return(c(rep(1,nfile)))
               
             }
           }
         })
         
-        umads<-reactive({
+        umads<<-reactive(
           
-          if(standard()==1){
-            return(c(rep(input$u_mad,nfile)))
-          }else{
-            return(c(rep(0.000015,nfile)))
-            
-          }
+          return(c(rep(input$u_mad,nfile)))
           
-        })
+        )
+        
         
         ####
         
@@ -3967,16 +3470,7 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              
-              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-                nr= nrow(read.csv(input$calfile$datapath[i]))
-              }
-              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-                nr= nrow(read.xlsx(input$calfile$datapath[i],1))
-              }
-              
-              #nr= nrow(read.csv(input$calfile$datapath[i]))
+              nr= nrow(read.csv(input$calfile$datapath[i]))
               expc[[i]]<-(c(rep(1*i,each=nr)))
               expc[[i]]<-t(expc[[i]])
             } 
@@ -4001,7 +3495,7 @@ shinyServer(function(input, output,session) {
           }
         })
         
-        
+       
         
         madsm<<-reactive(
           caldata()$mad
@@ -4025,15 +3519,7 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-                tmp[[i]]=read.csv(input$calfile$datapath[i])
-              }
-              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-                tmp[[i]]=read.xlsx(input$calfile$datapath[i],1)
-              }
-              
-              # tmp[[i]]=read.csv(input$calfile$datapath[i])
+              tmp[[i]]=read.csv(input$calfile$datapath[i])
               
             }
             
@@ -4062,18 +3548,8 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-                nr<<-nrow(read.csv(input$calfile$datapath[i]))
-                nrac<-ncol(read.csv(input$calfile$datapath[i]))-3
-              }
-              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-                nr<<-nrow(read.xlsx(input$calfile$datapath[i],1))
-                nrac<-ncol(read.xlsx(input$calfile$datapath[i],1))-3
-              }
-              
-              #nr<<-nrow(read.csv(input$calfile$datapath[i]))
-              # nrac<-ncol(read.csv(input$calfile$datapath[i]))-3
+              nr<<-nrow(read.csv(input$calfile$datapath[i]))
+              nrac<-ncol(read.csv(input$calfile$datapath[i]))-3
               n1<-nr*nrac
               expc1[[i]]<-matrix(c(rep(1*i,each=n1)))
               
@@ -4097,17 +3573,8 @@ shinyServer(function(input, output,session) {
             
             csv=list()
             
-            if(stringr::str_ends(input$calfile$datapath[1], "csv")) {
-              k<-nrow(read.csv(input$calfile$datapath[1]))
-              nrac<-ncol(read.csv(input$calfile$datapath[1]))-3
-            }
-            else if(stringr::str_ends(input$calfile$datapath[1], "xlsx")) {
-              k<-nrow(read.xlsx(input$calfile$datapath[1],1))
-              nrac<-ncol(read.xlsx(input$calfile$datapath[1],1))-3
-            }
-            
-            # k<-nrow(read.csv(input$calfile$datapath[1]))
-            #nrac<-ncol(read.csv(input$calfile$datapath[1]))-3
+            k<-nrow(read.csv(input$calfile$datapath[1]))
+            nrac<-ncol(read.csv(input$calfile$datapath[1]))-3
             
             
             csv[[1]]=c(rep(1:k,nrac))
@@ -4117,16 +3584,7 @@ shinyServer(function(input, output,session) {
             {
               
               c=max(csv[[i-1]])+1
-              
-              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-                x=nrow(read.csv(input$calfile$datapath[i]))
-                
-              }
-              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-                x=nrow(read.xlsx(input$calfile$datapath[i],1))
-              }
-              
-              #x=nrow(read.csv(input$calfile$datapath[i]))
+              x=nrow(read.csv(input$calfile$datapath[i]))
               y=c+x-1
               csv[[i]]=c(rep(c:y, nrac))
               
@@ -4141,6 +3599,8 @@ shinyServer(function(input, output,session) {
         })
         
         
+        
+        
         rac<- reactive({
           
           if (is.null(input$calfile))
@@ -4153,16 +3613,7 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$calfile$datapath[i])
-                
-              }
-              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$calfile$datapath[i],1)
-              }
-              
-              #csv[[i]]=read.csv(input$calfile$datapath[i])
+              csv[[i]]=read.csv(input$calfile$datapath[i])
               csv[[i]][1:3]<-NULL
             }
             
@@ -4184,15 +3635,7 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$samplefile$datapath[i])
-                
-              }
-              else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$samplefile$datapath[i],1)
-              }
-              #csv[[i]]=read.csv(input$samplefile$datapath[i])
+              csv[[i]]=read.csv(input$samplefile$datapath[i])
               csv[[i]][1:2]<-NULL
             }
             
@@ -4237,15 +3680,7 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-                tmp[[i]]=read.csv(input$samplefile$datapath[i])
-                
-              }
-              else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                tmp[[i]]=read.xlsx(input$samplefile$datapath[i],1)
-              }
-              #tmp[[i]]=read.csv(input$samplefile$datapath[i])
+              tmp[[i]]=read.csv(input$samplefile$datapath[i])
               
             }
             
@@ -4272,18 +3707,7 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-                nr= nrow(read.csv(input$samplefile$datapath[i]))
-                
-              }
-              else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                nr= nrow(read.xlsx(input$samplefile$datapath[i],1))
-              }
-              
-              #nr= nrow(read.csv(input$samplefile$datapath[i]))
-              
-              
+              nr= nrow(read.csv(input$samplefile$datapath[i]))
               exp[[i]]<-(c(rep(1*i,each=nr)))
               exp[[i]]<-t(exp[[i]])
             } 
@@ -4309,20 +3733,8 @@ shinyServer(function(input, output,session) {
             
             for(i in 1: nfile)
             {
-              
-              if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-                nr<<-nrow(read.csv(input$samplefile$datapath[i]))
-                nrac<-ncol(read.csv(input$samplefile$datapath[i]))-2
-                
-              }
-              else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                nr<<-nrow(read.xlsx(input$samplefile$datapath[i],1))
-                nrac<-ncol(read.xlsx(input$samplefile$datapath[i],1))-2
-              }
-              # nr<<-nrow(read.csv(input$samplefile$datapath[i]))
-              #nrac<-ncol(read.csv(input$samplefile$datapath[i]))-2
-              
-              
+              nr<<-nrow(read.csv(input$samplefile$datapath[i]))
+              nrac<-ncol(read.csv(input$samplefile$datapath[i]))-2
               n1<-nr*nrac
               expr[[i]]<-matrix(c(rep(1*i,each=n1)))
               
@@ -4346,17 +3758,8 @@ shinyServer(function(input, output,session) {
             
             csv=list()
             
-            if(stringr::str_ends(input$samplefile$datapath[1], "csv")) {
-              k<-nrow(read.csv(input$samplefile$datapath[1]))
-              nras<-ncol(read.csv(input$samplefile$datapath[1]))-2
-              
-            }
-            else if(stringr::str_ends(input$samplefile$datapath[1], "xlsx")) {
-              k<-nrow(read.xlsx(input$samplefile$datapath[1],1))
-              nras<-ncol(read.xlsx(input$samplefile$datapath[1],1))-2
-            }
-            #k<-nrow(read.csv(input$samplefile$datapath[1]))
-            #nras<-ncol(read.csv(input$samplefile$datapath[1]))-2
+            k<-nrow(read.csv(input$samplefile$datapath[1]))
+            nras<-ncol(read.csv(input$samplefile$datapath[1]))-2
             
             
             csv[[1]]=c(rep(1:k,nras))
@@ -4366,18 +3769,7 @@ shinyServer(function(input, output,session) {
             {
               
               c=max(csv[[i-1]])+1
-              
-              if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-                x=nrow(read.csv(input$samplefile$datapath[i]))
-                
-              }
-              else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                x=nrow(read.xlsx(input$samplefile$datapath[i],1))
-              }
-              
-              #x=nrow(read.csv(input$samplefile$datapath[i]))
-              
-              
+              x=nrow(read.csv(input$samplefile$datapath[i]))
               y=c+x-1
               csv[[i]]=c(rep(c:y, nras))
               
@@ -4403,15 +3795,7 @@ shinyServer(function(input, output,session) {
           
           if (!is.null(input$calfile))
           {
-            
-            if(stringr::str_ends(input$samplefile$datapath[1], "csv")) {
-              nrac<-ncol(read.csv(input$calfile$datapath[1]))-3
-              
-            }
-            else if(stringr::str_ends(input$samplefile$datapath[1], "xlsx")) {
-              nrac<-ncol(read.xlsx(input$calfile$datapath[1],1))-3
-            }
-            #nrac<-ncol(read.csv(input$calfile$datapath[1]))-3
+            nrac<-ncol(read.csv(input$calfile$datapath[1]))-3
             
           }
         })
@@ -4423,19 +3807,7 @@ shinyServer(function(input, output,session) {
             
             vec=list()
             for(i in 1: nfile){
-              
-              
-              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-                vec[[i]]<-nrow(read.csv(input$calfile$datapath[i]))
-                
-                
-              }
-              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-                vec[[i]]<-nrow(read.xlsx(input$calfile$datapath[i],1))
-              }
-              
-              #vec[[i]]<-nrow(read.csv(input$calfile$datapath[i]))
-              
+              vec[[i]]<-nrow(read.csv(input$calfile$datapath[i]))
             }
             return(vec)
           }
@@ -4448,17 +3820,7 @@ shinyServer(function(input, output,session) {
             
             vec=list()
             for(i in 1: nfile){
-              
-              if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-                vec[[i]]<-nrow(read.csv(input$samplefile$datapath[i]))
-                
-              }
-              else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                vec[[i]]<-nrow(read.xlsx(input$samplefile$datapath[i],1))
-              }
-              
-              #  vec[[i]]<-nrow(read.csv(input$samplefile$datapath[i]))
-              
+              vec[[i]]<-nrow(read.csv(input$samplefile$datapath[i]))
             }
             return(vec)
           }
@@ -4473,17 +3835,7 @@ shinyServer(function(input, output,session) {
             
             vecrac=list()
             for(i in 1: nfile){
-              
-              if(stringr::str_ends(input$calfile$datapath[i], "csv")) {
-                vecrac[[i]]<-nrac()*nrow(read.csv(input$calfile$datapath[i]))
-                
-              }
-              else if(stringr::str_ends(input$calfile$datapath[i], "xlsx")) {
-                vecrac[[i]]<-nrac()*nrow(read.xlsx(input$calfile$datapath[i],1))
-              }
-              
-              #vecrac[[i]]<-nrac()*nrow(read.csv(input$calfile$datapath[i]))
-              
+              vecrac[[i]]<-nrac()*nrow(read.csv(input$calfile$datapath[i]))
             }
             return(vecrac)
           }
@@ -4496,18 +3848,7 @@ shinyServer(function(input, output,session) {
             
             vecras=list()
             for(i in 1: nfile){
-              
-              if(stringr::str_ends(input$samplefile$datapath[i], "csv")) {
-                vecras[[i]]<-nrac()*nrow(read.csv(input$samplefile$datapath[i]))
-                
-              }
-              else if(stringr::str_ends(input$samplefile$datapath[i], "xlsx")) {
-                vecras[[i]]<-nrac()*nrow(read.xlsx(input$samplefile$datapath[i],1))
-              }
-              
-              #   vecras[[i]]<-nrac()*nrow(read.csv(input$samplefile$datapath[i]))
-              
-              
+              vecras[[i]]<-nrac()*nrow(read.csv(input$samplefile$datapath[i]))
             }
             return(vecras)
           }
@@ -4647,7 +3988,7 @@ shinyServer(function(input, output,session) {
                         inits=lineinits,
                         parameters=c("b","wd","wac","vyp","vsp","mult","mean","predm","mumeanfin"),   
                         model.file=linemodel,
-                        n.iter = 10000, n.burnin = 5000, n.thin = 10,n.chains =1)#debug=T)
+                        n.iter = 10000, n.burnin = 5000, n.thin = 10,n.chains =1)#,debug=T)
         })
         
         ###########################################
@@ -4745,8 +4086,8 @@ shinyServer(function(input, output,session) {
           vilmean[[i]]=mean(vipp[[i]])
           vilsd[[i]]=sd(vipp[[i]])
           
-          vill[[i]]=quantile(vipp[[i]],0.025)
-          viuu[[i]]=quantile(vipp[[i]],0.975)
+          vill[[i]]=vilmean[[i]]-2*vilsd[[i]]
+          viuu[[i]]=vilmean[[i]]+2*vilsd[[i]]
           xnew[[i]]=mean(mult[[i]])
           wacm[[i]]=mean(wacmean[[i]])
         }
@@ -4833,13 +4174,7 @@ shinyServer(function(input, output,session) {
         
         
         vyll<-lineout$mean$vyp-2*lineout$sd$vyp
-        
-        if(vyll<=0){
-          vyll=0
-        }
-        vylll<-vyll
-        
-        
+        vylll<-lineout$mean$vyp-2*lineout$sd$vyp
         vyuu<-lineout$mean$vyp+2*lineout$sd$vyp
         vyuuu<-lineout$mean$vyp+2*lineout$sd$vyp
         
@@ -4853,12 +4188,7 @@ shinyServer(function(input, output,session) {
         vxuu<-c("user's input")
         
         vsll<-lineout$mean$vsp-2*lineout$sd$vsp #DOE vsl
-        if(vsll<=0){
-          vsll=0
-        }
-        
-        vslll<-vsll #DOE vsl
-        
+        vslll<-lineout$mean$vsp-2*lineout$sd$vsp #DOE vsl
         vsuu<-lineout$mean$vsp+2*lineout$sd$vsp #DOE vsu
         vsuuu<-lineout$mean$vsp+2*lineout$sd$vsp #DOE vsu
         
@@ -5070,7 +4400,7 @@ shinyServer(function(input, output,session) {
             std<-input$doestd1
             xnew=xnew[[2]]
             wacm=wacm[[2]]
-            
+      
             b=betau[[2]]
             
             betal=betal[[2]]
@@ -5082,7 +4412,7 @@ shinyServer(function(input, output,session) {
             vxl<-(input$vxl1)^2      #DOE vxl
             vxh<-(input$vxh1)^2     #DOE vxu
             
-            
+         
             lxl=(etalll[[2]])^2
             
             lxh=(etauuu[[2]])^2
@@ -5193,7 +4523,7 @@ shinyServer(function(input, output,session) {
                 h4("Please increase the total number of  observations otherwise the  experimental design is:",style = "color:red")
               })
               #######################################################
-              
+             
               #####
               results2 <- matrix(c(optIb,optsb,optqb),ncol=3, nrow = 1)
               colnames(results2)<-c("Calibrants","Samples","Sample replicate")
@@ -5268,7 +4598,7 @@ shinyServer(function(input, output,session) {
     }
     
   })
-  
+        
   ##################################################################
   ### Outputs of Bayesian analysis #################################
   ##################################################################
@@ -5304,7 +4634,7 @@ shinyServer(function(input, output,session) {
     paste(format(credible.interval[1],digits = input$digit+2),"to",format(credible.interval[2]))
   })
   
-  
+
   output$muest<-renderUI({
     
     fluidRow(
@@ -5315,11 +4645,35 @@ shinyServer(function(input, output,session) {
              p("The ",textOutput("coverageProbabilityPercentBayes",inline=T),
                " credible interval ranges from: ",textOutput("mu_quant",inline=T))
       ))
-    
+  
   })
+
+
+ 
+  output$report <- downloadHandler(
+    # For PDF output, change this to "report.pdf"
+    filename = "report.pdf",
+    content = function(file) {
+      # Copy the report file to a temporary directory before processing it, in
+      # case we don't have write permissions to the current working dir (which
+      # can happen when deployed).
+      tempReport <- file.path(tempdir(), "report.Rmd")
+      file.copy("report.Rmd", tempReport, overwrite = TRUE)
+      
+      # Set up parameters to pass to Rmd document
+      params <- list(bayes=outbayes() )
+      
+      # Knit the document, passing in the `params` list, and eval it in a
+      # child of the global environment (this isolates the code in the document
+      # from the code in this app).
+      rmarkdown::render(tempReport, output_file = file,
+                        params = params,
+                        envir = new.env(parent = globalenv())
+      )
+    }
+)
   
-  
-  #output$bind<-renderTable(outbayes()[["expout"]])
+     
   
   output$downloadbayesout <- downloadHandler(
     filename = "preexp_inputs&estimates.csv",
@@ -5333,7 +4687,7 @@ shinyServer(function(input, output,session) {
       write.csv(outbayes()[["expout"]], file, row.names = FALSE)
     }
   )
-  
+
   ####calibration plot
   
   observeEvent(input$go,{
@@ -5360,7 +4714,7 @@ shinyServer(function(input, output,session) {
             })
             plotOutput("plot2")
           })
-          
+        
           
           
         }else{
@@ -5422,7 +4776,7 @@ shinyServer(function(input, output,session) {
           
         }
       }
-      
+    
       ####Pre RF Module###
     }else{
       if (!is.null(input$calfile))
@@ -5469,10 +4823,10 @@ shinyServer(function(input, output,session) {
         }
       }
     }
-  })
+    })
   
   ##### LR model
-  
+ 
   observeEvent(input$go,{
     
     choice<-reactive(
@@ -5483,144 +4837,144 @@ shinyServer(function(input, output,session) {
       if(nfile==1){
         
         if(input$exp){
+         
+        output$doeout<-renderUI({
           
-          output$doeout<-renderUI({
+          output$optnum<-renderTable(outbayes()[["result"]],spacing=c( "l"),align="l",digits = 0)
+          output$optxb<-renderTable(outbayes()[["optxb"]],spacing=c( "l"),align="l")
+          output$optstd<-renderTable(outbayes()[["optstd"]],spacing=c( "l"),align="l")
+          tagList(
             
-            output$optnum<-renderTable(outbayes()[["result"]],spacing=c( "l"),align="l",digits = 0)
-            output$optxb<-renderTable(outbayes()[["optxb"]],spacing=c( "l"),align="l")
-            output$optstd<-renderTable(outbayes()[["optstd"]],spacing=c( "l"),align="l")
-            tagList(
+            fluidRow(style='margin: 0px;',
+                     
+           
+                     tableOutput("optnum"),
               
-              fluidRow(style='margin: 0px;',
-                       
-                       
-                       tableOutput("optnum"),
-                       
-                       tableOutput("optxb"),
-                       
-                       tableOutput("optstd"),
-                       hr()
-              )
-              
+                    tableOutput("optxb"),
+             
+                     tableOutput("optstd"),
+              hr()
             )
             
-          })
-        }
-        
-        
-        output$out1 = renderUI ({
-          
-          output$rsq <- renderTable({outbayes()[["rsq"]]},striped = F,spacing = "m",align="c",digits = 5)
-          output$outrega <- renderTable({outbayes()[["outa"]]},striped = F,spacing = "m",align="c",digits = 5)
-          output$outregb <- renderTable({outbayes()[["outb"]]},striped = F,spacing = "m",align="c",digits = 5)
-          output$outwac <- renderTable({outbayes()[["outwac"]]},striped = F,spacing = "m",align="c",digits = 5)
-          output$outeta <- renderTable({outbayes()[["outeta"]]},striped = F,spacing = "m",align="c",digits = 5)
-          output$outwd <- renderTable({outbayes()[["outwd"]]},striped = F,spacing = "m",align="c",digits = 5)
-          output$outvyp <- renderTable({outbayes()[["outvyp"]]},striped = F,spacing = "m",align="c",digits = 5)
-          output$outvsp <- renderTable({outbayes()[["outvsp"]]},striped = F,spacing = "m",align="c",digits = 5)
-          output$outvip <- renderTable({outbayes()[["outvip"]]},striped = F,spacing = "m",align="c",digits = 5)
-          output$outxnew <- renderTable({outbayes()[["outxnew"]]},striped = F,spacing = "m",align="c",digits = 5)
-          output$wac <- renderTable(list(Min={outbayes()[["waca"]]},Max={outbayes()[["wacb"]]}),striped = F,spacing = "m",align="c",digits = 5)
-          output$xnew <- renderTable({outbayes()[["xnew"]]},striped = F,spacing = "m",align="c",digits = 5)
-          #    output$wacsd <- renderTable({outbayes()[["wacsd"]]},striped = F,spacing = "m",align="c",digits = 5)
-          #output$wacm <- renderTable(list(mean={outbayes()[["wacm"]]}),striped = F,spacing = "m",align="c",digits = 5)
-          #     
-          output$beta <- renderTable(list(Min={outbayes()[["betal"]]},Max={outbayes()[["betau"]]}),striped = F,spacing = "m",align="c",digits = 5)
-          output$vy <- renderTable(list(Min={outbayes()[["vyl"]]},Max={outbayes()[["vyu"]]}),striped = F,spacing = "m",align="c",digits = 5)
-          output$vi <- renderTable(list(Min={outbayes()[["vil"]]},Max={outbayes()[["viu"]]}),striped = F,spacing = "m",align="c",digits = 5)
-          output$vx <- renderTable(list(Min={outbayes()[["vxl"]]},Max={outbayes()[["vxu"]]}),striped = F,spacing = "m",align="c",digits = 5)
-          output$rux <- renderTable(list(Min={outbayes()[["etal"]]},Max={outbayes()[["etau"]]}),striped = F,spacing = "m",align="c",digits = 5)
-          output$vs <- renderTable(list(Min={outbayes()[["vsl"]]},Max={outbayes()[["vsu"]]}),striped = F,spacing = "m",align="c",digits = 5)
-          
-          #     
-          tagList(
-            #      
-            fluidRow(
-              column(3,
-                     p("R-squared: ",tableOutput("rsq"))),
-              column(4,
-                     p("Intercept: ",tableOutput("outrega"))),
-              column(4,
-                     p("Slope: ",tableOutput("outregb"))),
-            ),
-            #       
-            br(),
-            #       fluidRow(
-            #         column(4,
-            #                p("Wd: ",tableOutput("outwd"))
-            #         ),
-            #         column(4,
-            #                p("Uy: ",tableOutput("outvyp"))
-            #         ),
-            #         column(4,
-            #                p("Us: ",tableOutput("outvsp"))
-            #         )),
-            # 
-            #         fluidRow(
-            # 
-            #         column(4,
-            #                p("Ui: ",tableOutput("outvip"))
-            #         ),
-            # 
-            #          column(4,
-            #                 p("Xnew: ",tableOutput("outxnew"))
-            # 
-            #         )
-            #         ),
-            # #       
-            #       fluidRow(
-            # 
-            #         column(4,
-            #                p("Ratio of masses of A to I in calibration: ",tableOutput("outwac"))
-            #         ),
-            # 
-            #         column(4,
-            #                p("Rux: ",tableOutput("outeta"))
-            #         )),
-            
-            
-            hr(),
-            h4("The estimated parameters for the design of experiment(the 95% credible interval): ",style = "color:seagreen"),
-            fluidRow(
-              column(6,
-                     p("The expected approximate value of the measurand,quantity of A",tableOutput("xnew"))
-              ),
-              column(6,
-                     p("The Slope of calibration line",tableOutput("beta"))
-              )
-            ),
-            
-            fluidRow(
-              column(6,
-                     p("Target calibration region;x-axis range in terms of concentrations of A:I in the calibration solutions",tableOutput("wac"))
-              ),
-              column(6,
-                     p("Expected standard deviation of peak area ratios (A:I) from a calibration solution; (uy)",tableOutput("vy"))
-                     
-              )),
-            
-            fluidRow(
-              column(6,
-                     p("Expected standard uncertainty of the concentration ratios of A:I in the calibration experiment; (ux)",tableOutput("vx"))
-              ),
-              column(6,
-                     p("Expected relative standard uncertainty of the concentration of I in samples measured for the quantitation experiment; (ui)",tableOutput("vi"))
-                     
-              )),
-            
-            fluidRow(
-              column(6,
-                     p("Expected relative standard uncertainty of the concentration ratios of A:I in the calibration experiment (rux)",tableOutput("rux"))
-              ),
-              column(6,
-                     p("Expected between-sample variability (standard deviation) of peak area ratios (A:I) from the quantitation experiment(us)",tableOutput("vs"))
-                     
-              ))
-            
-            
-            #     ###
           )
+          
         })
+        }
+      
+        
+       output$out1 = renderUI ({
+        
+          output$rsq <- renderTable({outbayes()[["rsq"]]},striped = F,spacing = "m",align="c",digits = 5)
+        output$outrega <- renderTable({outbayes()[["outa"]]},striped = F,spacing = "m",align="c",digits = 5)
+        output$outregb <- renderTable({outbayes()[["outb"]]},striped = F,spacing = "m",align="c",digits = 5)
+        output$outwac <- renderTable({outbayes()[["outwac"]]},striped = F,spacing = "m",align="c",digits = 5)
+        output$outeta <- renderTable({outbayes()[["outeta"]]},striped = F,spacing = "m",align="c",digits = 5)
+        output$outwd <- renderTable({outbayes()[["outwd"]]},striped = F,spacing = "m",align="c",digits = 5)
+        output$outvyp <- renderTable({outbayes()[["outvyp"]]},striped = F,spacing = "m",align="c",digits = 5)
+        output$outvsp <- renderTable({outbayes()[["outvsp"]]},striped = F,spacing = "m",align="c",digits = 5)
+        output$outvip <- renderTable({outbayes()[["outvip"]]},striped = F,spacing = "m",align="c",digits = 5)
+        output$outxnew <- renderTable({outbayes()[["outxnew"]]},striped = F,spacing = "m",align="c",digits = 5)
+        output$wac <- renderTable(list(Min={outbayes()[["waca"]]},Max={outbayes()[["wacb"]]}),striped = F,spacing = "m",align="c",digits = 5)
+        output$xnew <- renderTable({outbayes()[["xnew"]]},striped = F,spacing = "m",align="c",digits = 5)
+    #    output$wacsd <- renderTable({outbayes()[["wacsd"]]},striped = F,spacing = "m",align="c",digits = 5)
+        #output$wacm <- renderTable(list(mean={outbayes()[["wacm"]]}),striped = F,spacing = "m",align="c",digits = 5)
+    #     
+        output$beta <- renderTable(list(Min={outbayes()[["betal"]]},Max={outbayes()[["betau"]]}),striped = F,spacing = "m",align="c",digits = 5)
+        output$vy <- renderTable(list(Min={outbayes()[["vyl"]]},Max={outbayes()[["vyu"]]}),striped = F,spacing = "m",align="c",digits = 5)
+        output$vi <- renderTable(list(Min={outbayes()[["vil"]]},Max={outbayes()[["viu"]]}),striped = F,spacing = "m",align="c",digits = 5)
+        output$vx <- renderTable(list(Min={outbayes()[["vxl"]]},Max={outbayes()[["vxu"]]}),striped = F,spacing = "m",align="c",digits = 5)
+        output$rux <- renderTable(list(Min={outbayes()[["etal"]]},Max={outbayes()[["etau"]]}),striped = F,spacing = "m",align="c",digits = 5)
+        output$vs <- renderTable(list(Min={outbayes()[["vsl"]]},Max={outbayes()[["vsu"]]}),striped = F,spacing = "m",align="c",digits = 5)
+
+    #     
+           tagList(
+    #      
+          fluidRow(
+            column(3,
+                   p("R-squared: ",tableOutput("rsq"))),
+            column(4,
+                   p("Intercept: ",tableOutput("outrega"))),
+            column(4,
+                   p("Slope: ",tableOutput("outregb"))),
+          ),
+    #       
+          br(),
+    #       fluidRow(
+    #         column(4,
+    #                p("Wd: ",tableOutput("outwd"))
+    #         ),
+    #         column(4,
+    #                p("Uy: ",tableOutput("outvyp"))
+    #         ),
+    #         column(4,
+    #                p("Us: ",tableOutput("outvsp"))
+    #         )),
+    # 
+    #         fluidRow(
+    # 
+    #         column(4,
+    #                p("Ui: ",tableOutput("outvip"))
+    #         ),
+    # 
+    #          column(4,
+    #                 p("Xnew: ",tableOutput("outxnew"))
+    # 
+    #         )
+    #         ),
+    # #       
+    #       fluidRow(
+    # 
+    #         column(4,
+    #                p("Ratio of masses of A to I in calibration: ",tableOutput("outwac"))
+    #         ),
+    # 
+    #         column(4,
+    #                p("Rux: ",tableOutput("outeta"))
+    #         )),
+
+
+          hr(),
+          h4("The estimated parameters for the design of experiment(the 95% credible interval): ",style = "color:seagreen"),
+          fluidRow(
+            column(6,
+            p("The expected approximate value of the measurand,quantity of A",tableOutput("xnew"))
+            ),
+            column(6,
+           p("The Slope of calibration line",tableOutput("beta"))
+          )
+          ),
+
+          fluidRow(
+            column(6,
+            p("Target calibration region;x-axis range in terms of concentrations of A:I in the calibration solutions",tableOutput("wac"))
+          ),
+          column(6,
+          p("Expected standard deviation of peak area ratios (A:I) from a calibration solution; (uy)",tableOutput("vy"))
+
+                 )),
+
+          fluidRow(
+            column(6,
+                   p("Expected standard uncertainty of the concentration ratios of A:I in the calibration experiment; (ux)",tableOutput("vx"))
+            ),
+            column(6,
+                   p("Expected relative standard uncertainty of the concentration of I in samples measured for the quantitation experiment; (ui)",tableOutput("vi"))
+
+            )),
+
+          fluidRow(
+            column(6,
+                   p("Expected relative standard uncertainty of the concentration ratios of A:I in the calibration experiment (rux)",tableOutput("rux"))
+            ),
+            column(6,
+                   p("Expected between-sample variability (standard deviation) of peak area ratios (A:I) from the quantitation experiment(us)",tableOutput("vs"))
+
+            ))
+          
+          
+      #     ###
+         )
+       })
       }else{###LR N>1###
         
         if(input$exp){
@@ -5671,8 +5025,8 @@ shinyServer(function(input, output,session) {
         output$rux <- renderTable(list(Min={outbayes()[["etal"]]},Max={outbayes()[["etau"]]}),striped = F,spacing = "m",align="c",digits = 5)
         output$vs <- renderTable(list(Min={outbayes()[["vsl"]]},Max={outbayes()[["vsu"]]}),striped = F,spacing = "m",align="c",digits = 5)
         
-        
-        output$out1 = renderUI ({
+      
+          output$out1 = renderUI ({
           
           
           tagList(
@@ -5755,7 +5109,7 @@ shinyServer(function(input, output,session) {
         })
         
       }
-      
+    
       ###RF model  
     }else{
       
@@ -5765,7 +5119,7 @@ shinyServer(function(input, output,session) {
           output$doeout<-renderUI({
             
             output$optnum<-renderTable(outbayes()[["result"]],spacing=c( "l"),align="l",digits = 0)
-            # output$optxb<-renderTable(outbayes()[["optxb"]],spacing=c( "l"),align="l")
+           # output$optxb<-renderTable(outbayes()[["optxb"]],spacing=c( "l"),align="l")
             output$optstd<-renderTable(outbayes()[["optstd"]],spacing=c( "l"),align="l")
             
             tagList(
@@ -5946,7 +5300,7 @@ shinyServer(function(input, output,session) {
           
           tagList(
             fluidRow(
-              
+           
               column(4,
                      p("Response Factor: ",tableOutput("outregb")))
             ),
@@ -6015,12 +5369,12 @@ shinyServer(function(input, output,session) {
                      p("Expected between-sample variability (standard deviation) of peak area ratios (A:I) from the quantitation experiment(us)",tableOutput("vs"))
                      
               ))
-            
+          
             ###
           )
         })
         
-        
+    
       }
       
     }
@@ -6093,1277 +5447,1119 @@ shinyServer(function(input, output,session) {
   
   ###### render Ui 
   
-  
-  
-  #####DOE code
+
+   
+   #####DOE code
   
   # expde<- eventReactive(input$enter,{
-  observeEvent(input$enter,{
+   observeEvent(input$enter,{
     
-    #  validate(
-    #   need(is.numeric(input$totn) && input$coverage>=6, 'Error: Please input the number of sample size greater than 5!'),
-    #   
-    # )
+     #  validate(
+     #   need(is.numeric(input$totn) && input$coverage>=6, 'Error: Please input the number of sample size greater than 5!'),
+     #   
+     # )
+     
+     
+     withProgress(message = 'Running the DoE module...', style="old",value = 0, { 
+  
+       
+       
+     if (doeoption()==1){
+       #source("./Toman2019-ExpDesignAug14.R")
+     ######### inputs through the shiny interface#########################
     
-    
-    withProgress(message = 'Running the DoE module...', style="old",value = 0, { 
-      
-      
-      #####LR DOE Module
-      if (doeoption()==1){ 
-        #source("./Toman2019-ExpDesignAug14.R")
-        ######### inputs through the shiny interface#########################
+       if (input$totn<6){
+         
+         output$totnerr<-renderUI({
+           h4("Please input the number of sample size greater than 5!",style = "color:red")
+         })
+         
+       }else{
+         
+         output$totnerr<-renderUI({
+           HTML("")
+         })
+         
+         output$err2<-renderUI({
+           HTML("")
+         })
+       
+     totn<-input$totn
+     a<-input$a
+     b<-input$b
+     vyl<-(input$vyl)^2
+     vyu<-(input$vyu)^2
+     vxl<-(input$vxl)^2
+     vxu<-(input$vxu)^2
+     
+     betal<-input$betal
+     betau<-input$betau
+     etal<-(input$etal)^2
+     etau<-(input$etau)^2
+     vsl<-(input$vsl)^2
+     vsu<-(input$vsu)^2
+     xnew<-input$xnew
+     vil<-(input$vil)^2
+     viu<-(input$viu)^2
+     
+     std<-input$std ## required maximum relative std of the answer
+     ###################################################################
+     ### R code
+     caln<-c(4,6,8,10,12,14,15,16,18,20,22,24,28,30,36,40,44,48)
+     
+     out<-NULL
+     designh1<-expdesign2(caln[1],totn,a,b,vyu,vxu,betau,etau,vsu,xnew,viu)
+     out<-rbind(out,c(as.integer(designh1$optI),designh1$optJ,designh1$optr,designh1$optnr,designh1$optstd))
+     for(i in 2:18){if(out[i-1,5]>std){
+       designh<-expdesign2(caln[i],totn,a,b,vyu,vxu,betau,etau,vsu,xnew,viu)
+       out<-rbind(out,c(as.integer(designh$optI),designh$optJ,designh$optr,designh$optnr,designh$optstd)) 
+     }else{break}}
+     
+     outng<-NULL
+     outng<-out
+     outg<-NULL
+     while(dim(out)[1]<18){outg<-out
+     totn<-totn-1
+     if(totn==0){break}
+     
+     out<-NULL
+     designh1<-expdesign2(caln[1],totn,a,b,vyu,vxu,betau,etau,vsu,xnew,viu)
+     out<-rbind(out,c(as.integer(designh1$optI),designh1$optJ,designh1$optr,designh1$optnr,designh1$optstd))
+     for(i in 2:18){if(out[i-1,5]>std){
+       designh<-expdesign2(caln[i],totn,a,b,vyu,vxu,betau,etau,vsu,xnew,viu)
+       out<-rbind(out,c(as.integer(designh$optI),designh$optJ,designh$optr,designh$optnr,designh$optstd)) 
+     }else{break}}
+     
+     dimg<-dim(outg)[1]
+     
+     outgood<-outg[outg[,5]<std,] ### this contains the experimental designs that satisfy the std requirement
+     optI<-outgood[1] # optimal number of calibrants
+     optJ<-outgood[2]  # optimal number of replicates
+     optr<-outgood[3]  # optimal number of samples in the quantitation experiment
+     optnr<-outgood[4] # optimal number of replicates per sample
+     optstd<-outgood[5] # optimal expected relative standard deviation of the response
+     
+     optx<-NULL
+     optx[1]<-a
+     optIm1<-optI-1
+     
+     for(i in 1:optIm1){
+       optx[i+1]<-a+i*(b-a)/optIm1}}
+     
+     dimng<-dim(outng)[1]
+     
+     
+     
+     # hide_waiter()
+     
+     if(outng[dimng,5]>std){
+       ################to be printed in shiny#################
+       
+       #######################################################
+       outbest<-outng[18,]
+       optIb<-outbest[1]  # number of calibrants
+       optJb<-outbest[2]  # number of replicates
+       optrb<-outbest[3]  # number of samples in the quantitation experiment
+       optnrb<-outbest[4] # number of replicates per sample
+       optstdb<-outbest[5] # the smallest expected relative standard deviation of the response given your totn and std
+       optxb<-NULL
+       optxb[1]<-a
+       optIm1b<-optIb-1
+       for(i in 1:optIm1b){
+         optxb[i+1]<-a+i*(b-a)/optIm1b}
+       
+       
+          #shinyalert("Oops!", "Please increase the total number observations otherwise the best possible experimental design is:", type = "error")
+       output$err2<-renderUI({
+         h4("Please increase the total number of  observations otherwise the  experimental design is:",style = "color:red")
+       })
+       
+       
+       results <- matrix(c(optxb),ncol =length(optxb), nrow = 1)
+       optxb.colnames = sapply(1:length(optxb), function(x){paste0("level", x)})
+       colnames(results) = c( optxb.colnames)
+       
+       
+       results2 <- matrix(c(optIb,optJb,optrb,optnrb),ncol=4, nrow = 1)
+       colnames(results2) <- c("Calibrants","Calibrant_replicates","Samples","Sample_replicates")
+       
+       results3 <- matrix(c(optstdb))
+       colnames(results3) <- c("Expected Relative (%) Standard Deviation of Result")
+       
+       doeresults=list(results2,results,results3)
+       output$downloaddoe <- downloadHandler(
+         filename = "DoE_Results.csv",
+         content = function(file) {
+           write.csv(doeresults, file, row.names = FALSE)
+         }
+       )
+       # return(list(results=results,results2=results2,results3=results3))
+       
+        output$toPrint <- renderTable(results,spacing=c( "l"),align="l") ### print in Shiny
+        output$toPrint2 <- renderTable(results2,spacing=c( "l"),align="l",digits = 0)
+        output$toPrint3 <- renderTable(results3,spacing=c( "l"),align="l")
+     
         
-        if (input$totn<6){
-          
-          output$totnerr<-renderUI({
-            h4("Please input the number of sample size greater than 5!",style = "color:red")
-          })
-          
-        }else{
-          
-          output$totnerr<-renderUI({
-            HTML("")
-          })
-          
-          output$err2<-renderUI({
-            HTML("")
-          })
-          
-          totn<-input$totn
-          a<-input$a
-          b<-input$b
-          vyl<-(input$vyl)^2
-          vyu<-(input$vyu)^2
-          vxl<-(input$vxl)^2
-          vxu<-(input$vxu)^2
-          
-          betal<-input$betal
-          betau<-input$betau
-          etal<-(input$etal)^2
-          etau<-(input$etau)^2
-          vsl<-(input$vsl)^2
-          vsu<-(input$vsu)^2
-          xnew<-input$xnew
-          vil<-(input$vil)^2
-          viu<-(input$viu)^2
-          
-          std<-input$std ## required maximum relative std of the answer
-          ###################################################################
-          ### R code
-          caln<-c(4,6,8,10,12,14,15,16,18,20,22,24,28,30,36,40,44,48)
-          
-          out<-NULL
-          designh1<-expdesign2(caln[1],totn,a,b,vyu,vxu,betau,etau,vsu,xnew,viu)
-          out<-rbind(out,c(as.integer(designh1$optI),designh1$optJ,designh1$optr,designh1$optnr,designh1$optstd))
-          for(i in 2:18){if(out[i-1,5]>std){
-            designh<-expdesign2(caln[i],totn,a,b,vyu,vxu,betau,etau,vsu,xnew,viu)
-            out<-rbind(out,c(as.integer(designh$optI),designh$optJ,designh$optr,designh$optnr,designh$optstd)) 
-          }else{break}}
-          
-          outng<-NULL
-          outng<-out
-          outg<-NULL
-          while(dim(out)[1]<18){outg<-out
-          totn<-totn-1
-          if(totn==0){break}
-          
-          out<-NULL
-          designh1<-expdesign2(caln[1],totn,a,b,vyu,vxu,betau,etau,vsu,xnew,viu)
-          out<-rbind(out,c(as.integer(designh1$optI),designh1$optJ,designh1$optr,designh1$optnr,designh1$optstd))
-          for(i in 2:18){if(out[i-1,5]>std){
-            designh<-expdesign2(caln[i],totn,a,b,vyu,vxu,betau,etau,vsu,xnew,viu)
-            out<-rbind(out,c(as.integer(designh$optI),designh$optJ,designh$optr,designh$optnr,designh$optstd)) 
-          }else{break}}
-          
-          dimg<-dim(outg)[1]
-          
-          outgood<-outg[outg[,5]<std,] ### this contains the experimental designs that satisfy the std requirement
-          optI<-outgood[1] # optimal number of calibrants
-          optJ<-outgood[2]  # optimal number of replicates
-          optr<-outgood[3]  # optimal number of samples in the quantitation experiment
-          optnr<-outgood[4] # optimal number of replicates per sample
-          optstd<-outgood[5] # optimal expected relative standard deviation of the response
-          
-          optx<-NULL
-          optx[1]<-a
-          optIm1<-optI-1
-          
-          for(i in 1:optIm1){
-            optx[i+1]<-a+i*(b-a)/optIm1}}
-          
-          dimng<-dim(outng)[1]
-          
-          
-          
-          # hide_waiter()
-          
-          if(outng[dimng,5]>std){
-            ################to be printed in shiny#################
-            
-            #######################################################
-            outbest<-outng[18,]
-            optIb<-outbest[1]  # number of calibrants
-            optJb<-outbest[2]  # number of replicates
-            optrb<-outbest[3]  # number of samples in the quantitation experiment
-            optnrb<-outbest[4] # number of replicates per sample
-            optstdb<-outbest[5] # the smallest expected relative standard deviation of the response given your totn and std
-            optxb<-NULL
-            optxb[1]<-a
-            optIm1b<-optIb-1
-            for(i in 1:optIm1b){
-              optxb[i+1]<-a+i*(b-a)/optIm1b}
-            
-            
-            #shinyalert("Oops!", "Please increase the total number observations otherwise the best possible experimental design is:", type = "error")
-            output$err2<-renderUI({
-              h4("Please increase the total number of  observations otherwise the  experimental design is:",style = "color:red")
-            })
-            
-            
-            results <- matrix(c(optxb),ncol =length(optxb), nrow = 1)
-            optxb.colnames = sapply(1:length(optxb), function(x){paste0("level", x)})
-            colnames(results) = c( optxb.colnames)
-            
-            
-            results2 <- matrix(c(optIb,optJb,optrb,optnrb),ncol=4, nrow = 1)
-            colnames(results2) <- c("Calibrants","Calibrant_replicates","Samples","Sample_replicates")
-            
-            results3 <- matrix(c(optstdb))
-            colnames(results3) <- c("Expected Relative (%) Standard Deviation of Result")
-            
-            doeresults=list(results2,results,results3)
-            output$downloaddoe <- downloadHandler(
-              filename = "DoE_Results.csv",
-              content = function(file) {
-                write.csv(doeresults, file, row.names = FALSE)
-              }
-            )
-            # return(list(results=results,results2=results2,results3=results3))
-            
-            output$toPrint <- renderTable(results,spacing=c( "l"),align="l") ### print in Shiny
-            output$toPrint2 <- renderTable(results2,spacing=c( "l"),align="l",digits = 0)
-            output$toPrint3 <- renderTable(results3,spacing=c( "l"),align="l")
-            
-            
-            
-            
-            ######################################################
-            
-          }else{
-            
-            
-            output$err2<-renderUI({
-              HTML("")
-            })
-            
-            results <- matrix(c(optx),ncol =length(optx), nrow = 1)
-            optx.colnames = sapply(1:length(optx), function(x){paste0("level", x)})
-            colnames(results) = c( optx.colnames)
-            
-            
-            results2 <- matrix(c(optI,optJ,optr,optnr),ncol=4, nrow = 1)
-            colnames(results2) <- c("Calibrants","Calibrant_replicates","Samples","Sample replicates")
-            
-            results3 <- matrix(c(optstd))
-            colnames(results3) <- c("Expected Relative (%) Standard Deviation of Result")
-            
-            doeresults=list(results2,
-                            results,results3)
-            output$downloaddoe <- downloadHandler(
-              filename = "DoE_Results.csv",
-              content = function(file) {
-                write.csv(doeresults, file, row.names = FALSE)
-              }
-            )
-            # return(list(results=results,results2=results2,results3=results3))
-            output$toPrint <- renderTable(results,spacing=c( "l"),align="l") ### print in Shiny
-            output$toPrint2 <- renderTable(results2,spacing=c( "l"),align="l",digits = 0)
-            output$toPrint3 <- renderTable(results3,spacing=c( "l"),align="l")
-            
-            
-          } 
-          #######################################################
-        }
-      }else{
-        
-        if (input$totn<6){
-          
-          output$totnerr<-renderUI({
-            h4("Please input the number of sample size greater than 5!",style = "color:red")
-          })
-          
-        }else{ #####RRF model
-          
-          output$totnerr<-renderUI({
-            HTML("")
-          })
-          
-          output$err2<-renderUI({
-            HTML("")
-          })
-          # source("./Toman2019-ExpDesignRFF.R")
-          #totn<-40#  Total number of available samples
-          
-          # vyl<-0.01544^2 # 0.0002383936 Expected standard deviation of peak area ratios (A:I) from a calibration solution; (uy)
-          #vyh<-0.04446^2 # 0.0019766916
-          # vxl<-0 #(ux) 
-          # vxh<-0.047^2  #(ux) 0.002209
-          #wacm<-487.727 # The expected approximate value of the concentration of A:I in the sample
-          
-          #bl<-0.00241 #The expected Response Factor value
-          # b<-0.00241 #The expected Response Factor value
-          #lxl<-0.0147^2 # (rux) 0.00021609
-          #lxh<-0.01617^2 # 0.0002614689
-          # vsl<-0.0073^2 #(us) 0.00005329
-          #vsh<-0.01756^2 # 0.0003083536
-          #xnew<-489.6 #Target calibration point in terms of concentration of A:I in the calibration solution
-          #lnewl<-0.01235^2# (ui) 0.0001525225
-          #lnewh<-0.02278^2#(ui) 0.0005189284
-          
-          
-          # std<-2.5 ## required maximum relative std of the answer
-          
-          totn<-input$totn
-          std<-input$std ## required maximum relative std of the answer
-          
-          xnew<-input$xnew
-          wacm<-input$wacm
-          b <-input$b  # response factor
-          
-          # bsigl<-input$bsigl
-          #bsigh<-input$bsigh
-          
-          vyl<-(input$vyl)^2
-          vyh<-(input$vyh)^2
-          
-          
-          vxl<-(input$vxl)^2
-          vxh<-(input$vxh)^2
-          
-          lxl <- (input$lxl)^2
-          lxh<- (input$lxh)^2
-          
-          vsl<-(input$vsl)^2
-          vsh<-(input$vsh)^2
-          
-          
-          lnewl<-(input$lnewl)^2
-          lnewh<-(input$lnewh)^2
-          
-          ######
-          
-          expdesign2<-function(caln,totn,b,vyh,vxh,lxh,wacm,vsh,xnew,lnewh){
-            
-            
-            caldes<-function(n,ny,b,vyh,vxh,lxh,wacm,vsh,xnew,lnewh){
-              r<-1
-              if(vsh>0 |lnewh>0){r=ny}
-              vbhat<-1/n*((vyh+b^2*vxh)/wacm^2+lxh*b^2)
-              sy<-(xnew^2*vbhat/b^2+vyh/ny/b^2+vsh/r/b^2+(b^2+vbhat)*xnew^2*lnewh/r/b^2)^0.5
-              relsq<-sy/xnew*100
-              totrep<-n+ny
-              samplrep<-ny/r
-              result<-list(samplrep=samplrep,nosamples=r,relsq=relsq,totrep=totrep)
-              return(result)
-            }
-            
-            
-            optx<-NULL
-            A<-NULL
-            
-            for(j in 1:caln){
-              quantn<-totn-j
-              if(quantn>0){
-                for(i in 1:quantn){
-                  des<-caldes(j,i,b,vyh,vxh,lxh,wacm,vsh,xnew,lnewh)
-                  if(caln>j-1){A<-rbind(A,c(j,des$relsq,des$nosamples,des$samplrep,des$totrep))}
-                }}}
-            
-            rowmin<-apply( A, 2, which.min)
-            optI<-A[rowmin[2],1]
-            opts<-A[rowmin[2],3]
-            optq<-A[rowmin[2],4]
-            optstd<-A[rowmin[2],2]
-            
-            result2<-list(optI=optI,opts=opts,optq=optq,optstd=optstd)
-            return(result2)}
-          
-          
-          ## required maximum relative std of the answer
-          ###################################################################
-          ### R code
-          ###################################################################
-          ### R code in server.R
-          caln<-NULL
-          totnm4<-totn-4
-          for(i in 1:totnm4){caln[i]<-i+3}
-          
-          
-          out<-NULL
-          designh1<-expdesign2(caln[1],totn,b,vyh,vxh,lxh,wacm,vsh,xnew,lnewh)
-          out<-rbind(out,c(as.integer(designh1$optI),designh1$opts,designh1$optq,designh1$optstd))
-          for(i in 2:totnm4){if(out[i-1,4]>std){
-            designh<-expdesign2(caln[i],totn,b,vyh,vxh,lxh,wacm,vsh,xnew,lnewh)
-            out<-rbind(out,c(as.integer(designh$optI),designh$opts,designh$optq,designh$optstd)) 
-          }else{break}}
-          
-          outng<-NULL
-          outng<-out
-          outg<-NULL
-          while(dim(out)[1]<totnm4){outg<-out
-          totn<-totn-1
-          if(totn==0){break}
-          out<-NULL
-          designh1<-expdesign2(caln[1],totn,b,vyh,vxh,lxh,wacm,vsh,xnew,lnewh)
-          out<-rbind(out,c(as.integer(designh1$optI),designh1$opts,designh1$optq,designh1$optstd))
-          for(i in 2:totnm4){if(out[i-1,4]>std){
-            designh<-expdesign2(caln[i],totn,b,vyh,vxh,lxh,wacm,vsh,xnew,lnewh)
-            out<-rbind(out,c(as.integer(designh$optI),designh$opts,designh$optq,designh$optstd)) 
-          }else{break}}
-          dimg<-dim(outg)[1]
-          
-          outgood<-outg[outg[,4]<std,] ### this contains the experimental designs that satisfy the std requirement
-          optI<-outgood[1] # optimal number of calibrants
-          
-          opts<-outgood[2]  # optimal number of samples in the quantitation experiment
-          optq<-outgood[3] # optimal number of replicates per sample
-          optstd<-outgood[4] # optimal expected relative standard deviation of the response
-          }
-          
-          
-          dimng<-dim(outng)[1]
-          if(outng[dimng,4]>std){
-            ################to be printed in shiny#################
-            #shinyalert("Oops!", "Please increase the total number observations otherwise the best possible experimental design is:", type = "error")
-            output$err2<-renderUI({
-              h4("Please increase the total number of  observations otherwise the  experimental design is:",style = "color:red")
-            })
-            #######################################################
-            outbest<-outng[totnm4,]
-            optIb<-outbest[1]  # number of calibrants
-            
-            optsb<-outbest[2]  # number of samples in the quantitation experiment
-            optqb<-outbest[3] # number of replicates per sample
-            optstdb<-outbest[4] # the smallest expected relative standard deviation of the response given your totn and std
-            
-            
-            ######## to be printed in Shiny#######################
-            results3 <- matrix(c(optstdb))
-            colnames(results3) <- c("Expected Relative (%) Standard Deviation of Result")
-            
-            results2 <- matrix(c(optIb,optsb,optqb),ncol=3, nrow = 1)
-            colnames(results2) <- c("Calibrants","Samples","Replicates")
-            
-            results=list()
-            
-            doeresults=list(results2,results3)
-            
-            output$downloaddoe <- downloadHandler(
-              filename = "DoE_Results.csv",
-              content = function(file) {
-                write.csv(doeresults, file, row.names = FALSE)
-              }
-            )
-            
-            # return(list(results=results,results2=results2,results3=results3))
-            output$toPrint <- renderTable(results,spacing=c( "l"),align="l") ### print in Shiny
-            output$toPrint2 <- renderTable(results2,spacing=c( "l"),align="l",digits = 0)
-            output$toPrint3 <- renderTable(results3,spacing=c( "l"),align="l")
-            #  
-            
-            ######################################################
-            
-          }else{
-            output$err2<-renderUI({
-              HTML("")
-            })
-            ####### to be printed in Shiny#########################
-            
-            results2 <- matrix(c(optI,opts,optq),ncol=3, nrow = 1)
-            colnames(results2) <- c("Calibrants","Samples","Replicates")
-            
-            results3 <- matrix(c(optstd))
-            colnames(results3) <- c("Expected Relative (%) Standard Deviation of Result")
-            
-            results=list()
-            
-            doeresults=list(results2,results3)
-            
-            output$downloaddoe <- downloadHandler(
-              filename = "DoE_Results.csv",
-              content = function(file) {
-                write.csv(doeresults, file, row.names = FALSE)
-              }
-            )
-            # return(list(results=results,results2=results2,results3=results3))
-            output$toPrint <- renderTable(results,spacing=c( "l"),align="l") ### print in Shiny
-            output$toPrint2 <- renderTable(results2,spacing=c( "l"),align="l",digits = 0)
-            output$toPrint3 <- renderTable(results3,spacing=c( "l"),align="l")
-            # 
-            
-            #######################################################
-          }
-        }
-      }
+       
+       
+       ######################################################
+       
+     }else{
+       
+       
+       output$err2<-renderUI({
+         HTML("")
+       })
+       
+       results <- matrix(c(optx),ncol =length(optx), nrow = 1)
+       optx.colnames = sapply(1:length(optx), function(x){paste0("level", x)})
+       colnames(results) = c( optx.colnames)
+       
+       
+       results2 <- matrix(c(optI,optJ,optr,optnr),ncol=4, nrow = 1)
+       colnames(results2) <- c("Calibrants","Calibrant_replicates","Samples","Sample replicates")
+       
+       results3 <- matrix(c(optstd))
+       colnames(results3) <- c("Expected Relative (%) Standard Deviation of Result")
+       
+       doeresults=list(results2,
+                       results,results3)
+       output$downloaddoe <- downloadHandler(
+         filename = "DoE_Results.csv",
+         content = function(file) {
+           write.csv(doeresults, file, row.names = FALSE)
+         }
+       )
+       # return(list(results=results,results2=results2,results3=results3))
+        output$toPrint <- renderTable(results,spacing=c( "l"),align="l") ### print in Shiny
+        output$toPrint2 <- renderTable(results2,spacing=c( "l"),align="l",digits = 0)
+        output$toPrint3 <- renderTable(results3,spacing=c( "l"),align="l")
+       
       
+     } 
+       #######################################################
+     }
+     }else{
+       
+       if (input$totn<6){
+         
+         output$totnerr<-renderUI({
+           h4("Please input the number of sample size greater than 5!",style = "color:red")
+         })
+         
+       }else{
+         
+         output$totnerr<-renderUI({
+           HTML("")
+         })
+         
+         output$err2<-renderUI({
+           HTML("")
+         })
+      # source("./Toman2019-ExpDesignRFF.R")
+       
+       totn<-input$totn
+       std<-input$std ## required maximum relative std of the answer
+       
+       xnew<-input$xnew
+       wacm<-input$wacm
+       b <-input$b
+       
+       # bsigl<-input$bsigl
+       # bsigh<-input$bsigh
+       
+       vyl<-(input$vyl)^2
+       vyh<-(input$vyh)^2
+       
+       
+       vxl<-(input$vxl)^2
+       vxh<-(input$vxh)^2
+       
+       lxl <- (input$lxl)^2
+       lxh<- (input$lxh)^2
+       
+       vsl<-(input$vsl)^2
+       vsh<-(input$vsh)^2
+       
+       
+       lnewl<-(input$lnewl)^2
+       lnewh<-(input$lnewh)^2
+       
+       ######
+       
+       expdesign2<-function(caln,totn,b,vyh,vxh,lxh,wacm,vsh,xnew,lnewh){
+         
+         
+         caldes<-function(n,ny,b,vyh,vxh,lxh,wacm,vsh,xnew,lnewh){
+           r<-1
+           if(vsh>0 |lnewh>0){r=ny}
+           vbhat<-1/n*(vyh+vxh)/wacm^2+lxh*b^2
+           sy<-(xnew^2*vbhat/b^2+vyh/ny/b^2+vsh/r/b^2+(b^2+vbhat)*xnew^2*lnewh/r/b^2)^0.5
+           relsq<-sy/xnew*100
+           totrep<-n+ny
+           samplrep<-ny/r
+           result<-list(samplrep=samplrep,nosamples=r,relsq=relsq,totrep=totrep)
+           return(result)
+         }
+         
+         
+         optx<-NULL
+         A<-NULL
+         
+         for(j in 1:caln){
+           quantn<-totn-j
+           if(quantn>0){
+             for(i in 1:quantn){
+               des<-caldes(j,i,b,vyh,vxh,lxh,wacm,vsh,xnew,lnewh)
+               if(caln>j-1){A<-rbind(A,c(j,des$relsq,des$nosamples,des$samplrep,des$totrep))}
+             }}}
+         
+         rowmin<-apply( A, 2, which.min)
+         optI<-A[rowmin[2],1]
+         opts<-A[rowmin[2],3]
+         optq<-A[rowmin[2],4]
+         optstd<-A[rowmin[2],2]
+         
+         result2<-list(optI=optI,opts=opts,optq=optq,optstd=optstd)
+         return(result2)}
+       
+       
+       ## required maximum relative std of the answer
+       ###################################################################
+       ### R code
+       ###################################################################
+       ### R code in server.R
+       caln<-NULL
+       totnm4<-totn-4
+       for(i in 1:totnm4){caln[i]<-i+3}
+       
+       
+       out<-NULL
+       designh1<-expdesign2(caln[1],totn,b,vyh,vxh,lxh,wacm,vsh,xnew,lnewh)
+       out<-rbind(out,c(as.integer(designh1$optI),designh1$opts,designh1$optq,designh1$optstd))
+       for(i in 2:totnm4){if(out[i-1,4]>std){
+         designh<-expdesign2(caln[i],totn,b,vyh,vxh,lxh,wacm,vsh,xnew,lnewh)
+         out<-rbind(out,c(as.integer(designh$optI),designh$opts,designh$optq,designh$optstd)) 
+       }else{break}}
+       
+       outng<-NULL
+       outng<-out
+       outg<-NULL
+       while(dim(out)[1]<totnm4){outg<-out
+       totn<-totn-1
+       if(totn==0){break}
+       out<-NULL
+       designh1<-expdesign2(caln[1],totn,b,vyh,vxh,lxh,wacm,vsh,xnew,lnewh)
+       out<-rbind(out,c(as.integer(designh1$optI),designh1$opts,designh1$optq,designh1$optstd))
+       for(i in 2:totnm4){if(out[i-1,4]>std){
+         designh<-expdesign2(caln[i],totn,b,vyh,vxh,lxh,wacm,vsh,xnew,lnewh)
+         out<-rbind(out,c(as.integer(designh$optI),designh$opts,designh$optq,designh$optstd)) 
+       }else{break}}
+       dimg<-dim(outg)[1]
+       
+       outgood<-outg[outg[,4]<std,] ### this contains the experimental designs that satisfy the std requirement
+       optI<-outgood[1] # optimal number of calibrants
+       
+       opts<-outgood[2]  # optimal number of samples in the quantitation experiment
+       optq<-outgood[3] # optimal number of replicates per sample
+       optstd<-outgood[4] # optimal expected relative standard deviation of the response
+       }
+       
+       
+       dimng<-dim(outng)[1]
+       if(outng[dimng,4]>std){
+         ################to be printed in shiny#################
+         #shinyalert("Oops!", "Please increase the total number observations otherwise the best possible experimental design is:", type = "error")
+         output$err2<-renderUI({
+           h4("Please increase the total number of  observations otherwise the  experimental design is:",style = "color:red")
+         })
+         #######################################################
+         outbest<-outng[totnm4,]
+         optIb<-outbest[1]  # number of calibrants
+         
+         optsb<-outbest[2]  # number of samples in the quantitation experiment
+         optqb<-outbest[3] # number of replicates per sample
+         optstdb<-outbest[4] # the smallest expected relative standard deviation of the response given your totn and std
+         
+         
+         ######## to be printed in Shiny#######################
+         results3 <- matrix(c(optstdb))
+         colnames(results3) <- c("Expected Relative (%) Standard Deviation of Result")
+         
+         results2 <- matrix(c(optIb,optsb,optqb),ncol=3, nrow = 1)
+         colnames(results2) <- c("Calibrants","Samples","Replicates")
+         
+         results=list()
+         
+         doeresults=list(results2,results3)
+         
+         output$downloaddoe <- downloadHandler(
+           filename = "DoE_Results.csv",
+           content = function(file) {
+             write.csv(doeresults, file, row.names = FALSE)
+           }
+         )
+         
+         # return(list(results=results,results2=results2,results3=results3))
+          output$toPrint <- renderTable(results,spacing=c( "l"),align="l") ### print in Shiny
+          output$toPrint2 <- renderTable(results2,spacing=c( "l"),align="l",digits = 0)
+         output$toPrint3 <- renderTable(results3,spacing=c( "l"),align="l")
+        #  
+         
+         ######################################################
+         
+       }else{
+         output$err2<-renderUI({
+           HTML("")
+         })
+         ####### to be printed in Shiny#########################
+         		
+         results2 <- matrix(c(optI,opts,optq),ncol=3, nrow = 1)
+         colnames(results2) <- c("Calibrants","Samples","Replicates")
+         
+         results3 <- matrix(c(optstd))
+         colnames(results3) <- c("Expected Relative (%) Standard Deviation of Result")
+         
+         results=list()
+         
+         doeresults=list(results2,results3)
+         
+         output$downloaddoe <- downloadHandler(
+           filename = "DoE_Results.csv",
+           content = function(file) {
+             write.csv(doeresults, file, row.names = FALSE)
+           }
+         )
+         # return(list(results=results,results2=results2,results3=results3))
+          output$toPrint <- renderTable(results,spacing=c( "l"),align="l") ### print in Shiny
+         output$toPrint2 <- renderTable(results2,spacing=c( "l"),align="l",digits = 0)
+          output$toPrint3 <- renderTable(results3,spacing=c( "l"),align="l")
+         # 
+         
+         #######################################################
+       }
+       }
+     }
+     
+     })
+
+    
     })
-    
-    
-  })
-  
-  # output$downloaddoeinput <- downloadHandler(
-  #   filename = "DoEinput.csv",
-  #   content = function(file) {
-  #     write.csv(outbayes()[["expout"]], file, row.names = FALSE)
-  #   }
-  # )
-  
-  observeEvent(input$enter,{
-    output$doeoutput<-renderUI(
-      
-      downloadButton('downloaddoe', 'Download DoE Results')
-      
-    )
-  })
-  #####################
-  ###Analysis module###
-  #####################
-  #####display uploaded files
-  ###caltables###
-  
-  ###caltables###
-  
-  output$anaui <- renderUI({
-    if(input$analysis){
-      
-      fluidRow(style='margin: 0px;',
-               column(12,
-                      h3("Model Results",style = "color:steelblue"),
-                      p("The posterior mean is: ",textOutput("mu_est1",inline=T)),
-                      p("The standard uncertainty is: ",textOutput("mu_se1",inline=T)),
-                      p("The posterior median is: ",textOutput("mu_median1",inline=T)),
-                      p("The ",textOutput("coverageProbabilityPercentBayes1",inline=T),
-                        " credible interval ranges from: ",textOutput("mu_quant1",inline=T))))
-    }
-  })
-  output$anaui1 <- renderUI({
-    if(input$analysis){     
-      fluidRow(style='margin: 0px;',
-               column(12, 
-                      downloadButton('downloadbayesout1', 'Download Inputs and Estimates')))
-    }
-  })
-  output$anaui2 <- renderUI({
-    if(input$analysis){     
-      fluidRow(style='margin: 0px;',
-               column(12, 
-                      plotOutput("mu_post_plot1", width = "auto", height = "600px"),
-                      downloadButton('download_mu_post_plot1', 'Download plot'),
-                      
-                      
-                      plotOutput("mu_trace_plot1", width = "auto", height = "600px"),
-                      downloadButton('download_mu_trace_plot1', 'Download plot')
-               )
-      )
-      
-    }
-  })
-  
-  
-  ####
-  observe({
-    if (!is.null(input$calfile1)) {
-      N_tables1 <<- length(input$calfile1[, 1])
-      
-      upload <- list()
-      for (i in 1:N_tables1) {
-        
-        if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-          upload[[i]] <- read.csv(input$calfile1$datapath[i])
-          
-        }
-        else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-          upload[[i]] <- read.xlsx(input$calfile1$datapath[i],1)
-        }
-        
-        #upload[[i]] <- read.csv(input$calfile1$datapath[i])
-        
-        
-      }
-      
-      output$nWS<-renderUI({
-        
-        tableOutput("NWS")
-      })
-      
-      output$caltables1 <- renderUI({
-        table_output_list <- lapply(1:N_tables1, function(i) {
-          tableOutput(paste0("table_name", i))
-        })
-        do.call(tagList, table_output_list)
-      })
-      
-      for (i in 1:N_tables1) {
-        local({
-          my_i <- i
-          output[[paste0("table_name", my_i)]] <- renderTable((
-            upload[[my_i]]
-          ),spacing = "s", striped = T,rownames = T,digits = 5)
-        })
-      }
-    }
-  })
-  
-  
-  #####sample tables######
-  
-  observe({
-    if (!is.null(input$samplefile1)) {
-      N_tables1<- length(input$samplefile1[, 1])
-      
-      upload <- list()
-      for (i in 1:N_tables1) {
-        
-        if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-          upload[[i]] <- read.csv(input$calfile1$datapath[i])
-          
-        }
-        else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-          upload[[i]] <- read.xlsx(input$calfile1$datapath[i],1)
-        }
-        
-        # upload[[i]] <- read.csv(input$samplefile1$datapath[i])
-        
-      }
-      
-      output$sampletables1 <- renderUI({
-        table_output_list <- lapply(1:N_tables1, function(i) {
-          tableOutput(paste0("table_name2", i))
-        })
-        do.call(tagList, table_output_list)
-      })
-      
-      for (i in 1:N_tables1) {
-        local({
-          my_i <- i
-          output[[paste0("table_name2", my_i)]] <- renderTable((
-            upload[[my_i]]
-          ),spacing = "s", striped = T,rownames = T,digits = 5)
-        })
-      }
-    }
-  })
-  
-  ###number of calibration
-  
-  cala <- reactive({
-    
-    inFile <- input$calfile1
-    if (is.null(input$calfile1)){
-      return(NULL)
-    }else{
-      
-      nfile1<<-nrow(input$calfile1)
-      
-      if(stringr::str_ends(input$calfile1$datapath[1], "csv")) {
-        tmp<- read.csv(input$calfile1$datapath[1])}
-      else if(stringr::str_ends(input$calfile1$datapath[1], "xlsx")) {
-        tmp <- read.xlsx(input$calfile1$datapath[1],1)
-      }
-      
-      
-      #tmp<- read.csv(inFile$datapath[1])
-      
-      
-      N1<<-nrow(tmp)#calbraton number
-      NR1<<-ncol(tmp)-3# number of replicates for each calibrant
-      NWS1<<-max(tmp$wsol)# #working solutions from  calibrationtable
-      cal<-c(N1,NR1,NWS1)
-      a<-t(as.matrix(cal))
-      colnames(a)<-c("Calibration Number","Calibration repeat","working solution")
-      return (a)
-      
-    }
-  })
-  
-  
-  
-  ######number of sample#####
-  
-  samb <- reactive({
-    inFile <- input$samplefile1
-    if (is.null(inFile)){
-      return(NULL)
-    }else{
-      
-      
-      
-      if(stringr::str_ends(input$samplefile1$datapath[1], "csv")) {
-        tmp<- read.csv(input$samplefile1$datapath[1])}
-      else if(stringr::str_ends(input$samplefile1$datapath[1], "xlsx")) {
-        tmp <- read.xlsx(input$samplefile1$datapath[1],1)
-      }
-      
-      #tmp<- read.csv(inFile$datapath[1])
-      
-      M1<<-nrow(tmp)
-      MR1<<-ncol(tmp)-2
-      sam1<-c(M1,MR1)
-      b<-t(as.matrix(sam1))
-      colnames(b)<-c("Number of Sample","Sample repeat")
-      return (b)
-      
-      
-    }
-  })
-  
-  ###creates the calibration table template
-  
-  cal.table1 = function(){
-    n.cols= 5 # mid + mad + replicates 
-    my.table = matrix("", nrow = 1, ncol = n.cols)
-    # rac.colnames = sapply(1:input$numberOfCalReps, function(x){paste0("rac", x)})
-    colnames(my.table) = c('mid', 'mad','wsol', 'rac1','rac2')
-    return(my.table)
-  }
-  
-  output$downloadCalTable1 <- downloadHandler(
-    filename = function(){
-      paste("calibration_input_template","xlsx",sep=".")
-    },
-    content = function(file) {
-      file.copy("calibration_input_template.xlsx",file)
-    }
-  )
-  
-  
-  
-  
-  ### This function creates the samples table template
-  
-  sam.table1 = function(){
-    n.cols= 4 
-    my.table = matrix("", nrow = 1, ncol = n.cols)
-    # ras.colnames = sapply(1:input$numberOfSampleReps, function(x){paste0("ras", x)})
-    colnames(my.table) = c('mids', 'mdi', 'ras1','ras2')
-    return(my.table)
-  }
-  
-  output$downloadSamTable1 <- downloadHandler(
-    
-    filename = function(){
-      paste("sample_input_template","xlsx",sep=".")
-    },
-    content = function(file) {
-      file.copy("sample_input_template.xlsx",file)
-    }
-  )
-  
-  ####merge calibration data talbes
-  ######standard options
-  
-  standardui1<-reactive(
-    
-    input$standard1
-  )
-  
-  output$standard_ui1<-renderUI({
-    
-    if(standardui1()==1){
-      tagList(
-        fluidRow(style='margin: 0px;',
-                 column(12,
-                        h3("Calibration standard inputs:",style = "color:steelblue"))),
-        
-        
-        fluidRow(style='margin: 0px;',
-                 column(6,
-                        wellPanel(
-                          textInput("wadm1",label =h4("Analyte working standard solution concentrations; Comma-separated entries for multiple inputs"), value="94.2, 95.5, 94.5",placeholder = "e.g. '94.2, 95.5, 94.5'"))),
-                 
-                 column(6,
-                        wellPanel(
-                          textInput("uwad1",label = h4("Uncertainties in working standard solution; Comma-separated entries for multiple inputs"),value="0.427, 0.434, 0.429",placeholder = "e.g. '0.427, 0.434, 0.429'")))),
-        
-        fluidRow(style='margin: 0px;',
-                 
-                 column(6,
-                        wellPanel(
-                          numericInput(
-                            "u_mid1", 
-                            label = h4("Uncertainty in masses (or volume) of internal standard solution added to calibrants (g, mL, etc.)"),
-                            value = 0.000015
-                          ))), 
-                 
-                 column(6,
-                        wellPanel(
-                          numericInput(
-                            "u_mad1", 
-                            label = h4("Uncertainty in masses (or volume) of analyte working standard solution added to calibrants(g, mL, etc.)"),
-                            value = 0.000015
-                          )))), 
-        
-        
-        fluidRow(style='margin: 0px;',
-                 column(12,
-                        h3("Sample preparation uncertainties:",style = "color:steelblue"))), 
-        fluidRow(style='margin: 0px;',
-                 column(6,
-                        wellPanel(
-                          numericInput(
-                            "u_mids1", 
-                            label = h4("Uncertainty in masses (or volume) of internal standard solution spiked into samples (g, mL, etc.)"),
-                            value = 0.000015
-                          ))), 
-                 
-                 column(6,
-                        wellPanel(        
-                          numericInput(
-                            "u_mdi1", 
-                            label = h4("Uncertainty in the masses (or volume) of substance sampled for measurement (serum, food, blood, etc.)"),
-                            value = 0.000015
-                          ))))
-      )
-    }else{
-      
-      tagList(
-        fluidRow(style='margin: 0px;',
-                 column(12,
-                        h3("Calibration standard inputs:",style = "color:steelblue"))),
-        
-        
-        fluidRow(style='margin: 0px;',
-                 column(6,
-                        wellPanel(
-                          textInput("wadm1",label =h4("Analyte working standard solution concentrations; Comma-separated entries for multiple inputs"), value="94.2, 95.5, 94.5",placeholder = "e.g. '94.2, 95.5, 94.5'"))),
-                 
-                 column(6,
-                        wellPanel(
-                          textInput("uwad1",label = h4("Uncertainties in working standard solution; Comma-separated entries for multiple inputs"),value="0.427, 0.434, 0.429",placeholder = "e.g. '0.427, 0.434, 0.429'")))),
-        
-        fluidRow(style='margin: 0px;',
-                 
-                 # column(6,
-                 #        wellPanel(
-                 #          numericInput(
-                 #            "u_mid", 
-                 #            label = h4("Uncertainty in masses (or volume) of internal standard solution added to calibrants (g, mL, etc.)"),
-                 #            value = 0.000015
-                 #          ))), 
-                 
-                 column(12,
-                        wellPanel(
-                          numericInput(
-                            "u_mad1", 
-                            label = h4("Uncertainty in masses (or volume) of analyte working standard solution added to calibrants(g, mL, etc.)"),
-                            value = 0.000015
-                          )))), 
-        
-        
-        fluidRow(style='margin: 0px;',
-                 column(12,
-                        h3("Sample preparation uncertainties:",style = "color:steelblue"))), 
-        fluidRow(style='margin: 0px;',
-                 # column(6,
-                 #        wellPanel(
-                 #          numericInput(
-                 #            "u_mids",
-                 #            label = NULL,
-                 #            value = 1
-                 #          ))),
-                 
-                 column(12,
-                        wellPanel(        
-                          numericInput(
-                            "u_mdi1", 
-                            label = h4("Uncertainty in the masses (or volume) of substance sampled for measurement (serum, food, blood, etc.)"),
-                            value = 0.000015
-                          ))))
-      )
-    }
-    
-  })
-  
-  
-  
-  
-  ####work solution of Calibration
-  
-  ####output tables
-  
-  
-  
-  output$calnum1 <- renderTable(cala(),striped = T,spacing = "l",align="c",digits = 0)
-  output$samplenum1 <- renderTable(samb(),striped = T,spacing = "l",align="c",digits = 0)
-  
-  ##################################################################
-  ##################################################################
-  ### Run Bayesian analysis ########################################
-  ##################################################################
-  ##################################################################
-  
-  outbayes1<- eventReactive(input$analysis,{
-    
-    N<-N1
-    NR<-NR1
-    #NWS<-NWS1
-    
-    M<-M1
-    MR<-MR1
-    
-    N_tables<-N_tables1
-    nfile<-N_tables1
-    
-    standard1<-reactive(
-      input$standard1
-    )
-    
-    choice<-reactive(
-      input$choice1
-    )
-    if (choice()==1){
-      ###NS==1
-      if(N_tables==1){
-        
-        caldata<-reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            csv=list()
-            
-            if(stringr::str_ends(input$calfile1$datapath[1], "csv")) {
-              csv=read.csv(input$calfile1$datapath[1])
-              
-            }
-            else if(stringr::str_ends(input$calfile1$datapath[1], "xlsx")) {
-              csv=read.xlsx(input$calfile1$datapath[1],1)
-            }
-            # csv=read.csv(input$calfile1$datapath[1])
-            return(csv)   
-          }
-          
-        })
-        
-        ####merge sample data talbes
-        
-        sampledata<-reactive({
-          
-          if (is.null(input$samplefile1))
-            return()
-          else
-          {
-            
-            csv=list()
-            
-            if(stringr::str_ends(input$samplefile1$datapath[1], "csv")) {
-              csv=read.csv(input$samplefile1$datapath[1])
-              
-            }
-            else if(stringr::str_ends(input$samplefile1$datapath[1], "xlsx")) {
-              csv=read.xlsx(input$samplefile1$datapath[1],1)
-            }
-            #csv=read.csv(input$samplefile1$datapath[1])
-            return(csv)
-          }
-          
-        })
-        
-        
-        wadm<<-reactive(
-          return(append(as.numeric(unlist(strsplit(gsub("\\s", "", input$wadm1),","))),1))
-          
-        )
-        
-        uwad<<-reactive(
-          return(append(as.numeric(unlist(strsplit(gsub("\\s", "", input$uwad1),","))),1))
-          
-        )
-        
-        ####
-        
-        
-        NWS <- reactive({
-          
-          inFile <- input$calfile1
-          if (is.null(input$calfile1)){
-            return(NULL)
-          }else{
-            
-            if(stringr::str_ends(input$calfile1$datapath[1], "csv")) {
-              tmp=read.csv(input$calfile1$datapath[1])
-              
-            }
-            else if(stringr::str_ends(input$calfile1$datapath[1], "xlsx")) {
-              tmp=read.xlsx(input$calfile1$datapath[1],1)
-            }
-            
-            #tmp<- read.csv(inFile$datapath[1])
-            
-            return(max(tmp$wsol))# #working solutions from  calibrationtable
-            
-            
-          }
-        })
-        
-        umids<-reactive({
-          
-          if (standard1()==1){
-            
-            return(c(rep(input$u_mid1,nfile)))
-          }else{
-            
-            return(c(rep(0.000015,nfile)))
-          }
-        })
-        
-        umads<-reactive({
-          
-          if(standard1()==1){
-            return(c(rep(input$u_mad1,nfile)))
-          }else{
-            return(c(rep(0.000015,nfile)))
-            
-          }
-          
-        })
-        
-        
-        ####
-        
-        NS<-reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            NS<-nrow(input$calfile1)
-            return(NS)
-            
-          }
-          
-        })
-        
-        
-        
-        NT<-reactive(
-          
-          return(N*NR)
-          
-        )
-        
-        
-        
-        
-        
-        midsm<-reactive(
-          if (standard1()==1){
-            caldata()$mid
-          }else{
-            
-            return(c(rep(caldata()$mad/caldata()$mad,NR)))
-            
-          }
-        )
-        
-        madsm<-reactive(
-          
-          if (standard1()==1){
-            caldata()$mad
-          }else{
-            return(c(rep(caldata()$mad,NR)))
-          }
-        )
-        
-        wsol<-reactive(
-          if (standard1()==1){
-            caldata()$wsol
-          }else {
-            
-            return(c(rep(caldata()$wsol,NR)))
-          }
-        )
-        
-        rac<- reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            
-            csv=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$calfile1$datapath[i])
+   
+   # output$downloaddoeinput <- downloadHandler(
+   #   filename = "DoEinput.csv",
+   #   content = function(file) {
+   #     write.csv(outbayes()[["expout"]], file, row.names = FALSE)
+   #   }
+   # )
+ 
+   observeEvent(input$enter,{
+   output$doeoutput<-renderUI(
+     
+     downloadButton('downloaddoe', 'Download DoE Results')
+     
+   )
+})
+   #####################
+   ###Analysis module###
+   #####################
+   #####display uploaded files
+   ###caltables###
+   
+   ###caltables###
+
+   output$anaui <- renderUI({
+     if(input$analysis){
+       
+       fluidRow(style='margin: 0px;',
+                column(12,
+                       h3("Model Results",style = "color:steelblue"),
+                    p("The posterior mean is: ",textOutput("mu_est1",inline=T)),
+                 p("The standard uncertainty is: ",textOutput("mu_se1",inline=T)),
+                 p("The posterior median is: ",textOutput("mu_median1",inline=T)),
+                 p("The ",textOutput("coverageProbabilityPercentBayes1",inline=T),
+                   " credible interval ranges from: ",textOutput("mu_quant1",inline=T))))
+     }
+   })
+   output$anaui1 <- renderUI({
+     if(input$analysis){     
+       fluidRow(style='margin: 0px;',
+                column(12, 
+                 downloadButton('downloadbayesout1', 'Download Inputs and Estimates')))
+       }
+     })
+   output$anaui2 <- renderUI({
+     if(input$analysis){     
+       fluidRow(style='margin: 0px;',
+                column(12, 
+                plotOutput("mu_post_plot1", width = "auto", height = "600px"),
+                downloadButton('download_mu_post_plot1', 'Download plot'),
                 
-              }
-              else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$calfile1$datapath[i],1)
-              }
-              #csv[[i]]=read.csv(input$calfile1$datapath[i])
-              csv[[i]][1:3]<-NULL
-            }
-            
-            return(unlist(csv)) # rbind the csv
-          }
-          
-        })
-        
-        
-        ras<- reactive({
-          
-          if (is.null(input$samplefile1))
-            return()
-          else
-          {
-            nfile<-nrow(input$samplefile1)
-            
-            csv=list()
-            
-            for(i in 1: nfile)
-            {
               
-              if(stringr::str_ends(input$samplefile1$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$samplefile1$datapath[i])
-                
-              }
-              else if(stringr::str_ends(input$samplefile1$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$samplefile1$datapath[i],1)
-              }
-              
-              #csv[[i]]=read.csv(input$samplefile1$datapath[i])
-              csv[[i]][1:2]<-NULL
-            }
-            
-            return(unlist(csv)) # rbind the csv
-          }
-          
-        })
-        
-        
-        mdi<-reactive(
-          
-          if (standard1()==1){
-            
-            return(sampledata()$mdi)
-            
-          }else {
-            return(c(rep(sampledata()$mdi,NR)))
-            
-          } 
-        )
-        
-        ####standard
-        midsi<-reactive(
-          
-          if(standard1()==1){
-            sampledata()$mids
-          }else{
-            return(c(rep(sampledata()$mdi/sampledata()$mdi,NR)))
-          }
-          
-        )
-        
-        MT<-reactive(
-          
-          return(M*MR)
-          
-        )
-        
-        
-        
-        sol<-reactive({
-          
-          if(standard1()==1){
-            return(rep(1:N,NR))
-          }else {
-            
-            return(rep(1:(N*NR)))
-          }
-          
-        })
-        
-        sampl<-reactive({
-          
-          if(standard1()==1){
-            rep(1:M,NR)
-          }else {
-            return(rep(1:(M*NR)))
-          }
-        })   
-        
-        NF<-reactive({
-          if(standard1()==1){
-            return(N)
-          }else {
-            return(N*NR)
-          }
-        })
-        
-        MF<-reactive({
-          if(standard1()==1){
-            return(M)
-          }else {
-            return(M*MR)
-          }
-        })
-        
-        
-        #####
-        
-        linedata = list(
-          midsm=midsm(),
-          madsm=madsm(),
-          wsol=wsol(),
-          rac=rac(),
-          midsi=midsi(),
-          mdi=mdi(),
-          ras=ras(),
-          umids=umids(),
-          umads=umads(),
-          wadm= wadm(),
-          uwad=uwad(),
-          NWS=NWS()+1,
-          N=NF(),
-          M=MF(),
-          MT=MT(),
-          NT=NT(),
-          sol=sol(),
-          NR=NR,
-          sampl=sampl()
-        )
-        
-        
-        # 
-        require(R2OpenBUGS)
-        ##################################################################
-        ##################################################################
-        ### Define the model
-        ##################################################################
-        ##################################################################
-        
-        
-        linemodel<-function(){#calculate known mass ratios wac for N calibrants.
-          
-          midsprec<-1/(umids*umids)
-          madsprec<-1/(umads*umads)
-          
-          for(i in 1:NWS){
-            wadprec[i]<-1/(uwad[i]*uwad[i])
-            wad[i]~dnorm(wadm[i],wadprec[i])
-          }
-          
-          for(i in 1:N){mids[i]~dnorm(midsm[i],midsprec)
-            mads[i]~dnorm(madsm[i],madsprec)
-          }
-          for(i in 1:N){wac[i]<-wad[wsol[i]]*mads[i]/mids[i]}  
-          
-          #######
-          #calibration equation
-          
-          a~dnorm(0,1.0E-5)
-          b~dnorm(0,1.0E-5)
-          
-          xins~dnorm(0,0.0016)%_%I(0.001,)
-          chsqns~dgamma(0.5,0.5)
-          fitprec<-xins/sqrt(chsqns)
-          
-          for(i in 1:N){mean[i]<-a+b*wac[i]
-          predm[i]~dnorm(mean[i],fitprec)}
-          for(i in 1:NT){rac[i]~dnorm(mean[sol[i]],fitprec)
-          }
-          vyp<-1/sqrt(fitprec)
-          ###
-          # Compute the mass fraction wd
-          a.cut<-cut(a)
-          b.cut<-cut(b)
-          sigras~dgamma(1.0E-5,1.0E-5)
-          wdsig~dgamma(1.0E-3,1.0E-3)
-          
-          wd~dnorm(0,1.0E-5)
-          for(i in 1:M){wdm[i]~dnorm(wd,wdsig)
-            rasmean[i]<-a.cut+b.cut*wdm[i]*mdi[i]/midsi[i]
-            rasmeanp[i]~dnorm(rasmean[i],fitprec)}
-          for(i in 1:MT){ras[i]~dnorm(rasmeanp[sampl[i]],sigras)}
-          vsp<-1/sqrt(sigras) ### vs
-          hetp<-vsp/vyp*100 
-        }
-        
-        ##################################################################
-        ##################################################################
-        ### Run OpenBUGS
-        ##################################################################
-        ##################################################################
-        
-        withProgress(message = 'Running Bayes', style="old",value = 0, {
-          
-          
-          
-          lineinits<-function(){list(sigras=1,wdsig=1,a=0,b=1)}
-          
-          lineout<-bugs(data=linedata,
-                        inits=lineinits,
-                        parameters=c("a","b","wd","wdm","wac","mean","hetp","predm"),   
-                        model.file=linemodel,
-                        n.iter = input$niters, n.burnin = input$nburnin, n.thin = 10,n.chains = 1)#,debug=T)    
-        })
-        
-        ######
-        attach.bugs(lineout) ## imports the random draws for the parameters
-        cl<-NULL
-        
-        for(i in 1:N){
-          for(j in 1:NR){cl<-c(cl,quantile(predm[,i], 0.025))}}
-        
-        cl<-rep(unique(cl), NR)
-        cu<-NULL
-        for(i in 1:N){
-          for(j in 1:NR){cu<-c(cu,quantile(predm[,i], 0.925))}}
-        cu<-rep(unique(cu), NR)
-        
-        
-        
-        
-        outsize<-data.frame(ncal=N, calrep=NR, nsampl=M, samplrep=MR) 
-        outrega<-data.frame(mean=lineout$mean$a,sd=lineout$sd$a)
-        
-        outregb<-data.frame(mean=lineout$mean$b,sd=lineout$sd$b)
-        outwdm<-data.frame(mean=lineout$mean$wdm,sd=lineout$sd$wdm)
-        outmean<-data.frame(mean=lineout$mean$mean)
-        outwd<-data.frame(mean=lineout$mean$wd,sd=lineout$sd$wd )
-        outhetp<-data.frame(mean=lineout$mean$hetp)
-        
-        
-        
-        
-        ########## sets up the data to plot the regression line and calculate the rsq
-        
-        outwac=lineout$mean$wac
-        
-        if(standard1()==1){
-          lwac<-rep(outwac,NR)
-        }else {
-          lwac<-rep(outwac,1)
-        }
-        
-        ############ calculates the rsq
-        ybar<-outmean
-        sst<-sum((rac()-mean(rac()))^2)
-        sse<-sum((rac()-ybar)^2)
-        rsq<-1-sse/sst
-        
-        ###Regression output###
-        
-        ########
-        bayesres=lineout$sims.list$wd
-        
-        
-        bind1 <-list(wadm=input$wadm1,uwad=input$uwad1,
+                plotOutput("mu_trace_plot1", width = "auto", height = "600px"),
+                downloadButton('download_mu_trace_plot1', 'Download plot')
+       )
+   )
+       
+     }
+   })
+  
+
+   ####
+   observe({
+     if (!is.null(input$calfile1)) {
+       N_tables1 <<- length(input$calfile1[, 1])
+       
+       upload <- list()
+       for (i in 1:N_tables1) {
+         upload[[i]] <- read.csv(input$calfile1$datapath[i])
+       }
+       
+       output$caltables1 <- renderUI({
+         table_output_list <- lapply(1:N_tables1, function(i) {
+           tableOutput(paste0("table_name", i))
+         })
+         do.call(tagList, table_output_list)
+       })
+       
+       for (i in 1:N_tables1) {
+         local({
+           my_i <- i
+           output[[paste0("table_name", my_i)]] <- renderTable((
+             upload[[my_i]]
+           ),spacing = "s", striped = T,rownames = T,digits = 5)
+         })
+       }
+     }
+   })
+   
+   
+   #####sample tables######
+   
+   observe({
+     if (!is.null(input$samplefile1)) {
+       N_tables1<- length(input$samplefile1[, 1])
+       
+       upload <- list()
+       for (i in 1:N_tables1) {
+         upload[[i]] <- read.csv(input$samplefile1$datapath[i])
+       }
+       
+       output$sampletables1 <- renderUI({
+         table_output_list <- lapply(1:N_tables1, function(i) {
+           tableOutput(paste0("table_name2", i))
+         })
+         do.call(tagList, table_output_list)
+       })
+       
+       for (i in 1:N_tables1) {
+         local({
+           my_i <- i
+           output[[paste0("table_name2", my_i)]] <- renderTable((
+             upload[[my_i]]
+           ),spacing = "s", striped = T,rownames = T,digits = 5)
+         })
+       }
+     }
+   })
+   
+   ###number of calibration
+   
+   cala <- reactive({
+     
+     inFile <- input$calfile1
+     if (is.null(input$calfile1)){
+       return(NULL)
+     }else{
+       
+       nfile1<<-nrow(input$calfile1)
+       tmp<- read.csv(inFile$datapath[1])
+       N1<<-nrow(tmp)#calbraton number
+       NR1<<-ncol(tmp)-3# number of replicates for each calibrant
+       NWS1<<-max(tmp$wsol)# #working solutions from  calibrationtable
+       cal<-c(N1,NR1,NWS1)
+       a<-t(as.matrix(cal))
+       colnames(a)<-c("Calibration Number","Calibration repeat","working solution")
+       return (a)
+       
+     }
+   })
+   
+   
+   
+   ######number of sample#####
+   
+   samb <- reactive({
+     inFile <- input$samplefile1
+     if (is.null(inFile)){
+       return(NULL)
+     }else{
+       
+       tmp<- read.csv(inFile$datapath[1])
+       M1<<-nrow(tmp)
+       MR1<<-ncol(tmp)-2
+       sam1<-c(M1,MR1)
+       b<-t(as.matrix(sam1))
+       colnames(b)<-c("Number of Sample","Sample repeat")
+       return (b)
+       
+       
+     }
+   })
+   
+   ###creates the calibration table template
+   
+   cal.table1 = function(){
+     n.cols= 5 # mid + mad + replicates 
+     my.table = matrix("", nrow = 1, ncol = n.cols)
+     # rac.colnames = sapply(1:input$numberOfCalReps, function(x){paste0("rac", x)})
+     colnames(my.table) = c('mid', 'mad','wsol', 'rac1','rac2')
+     return(my.table)
+   }
+   
+   output$downloadCalTable1 <- downloadHandler(
+     filename = function(){
+       paste("cal_template","xlsx",sep=".")
+     },
+     content = function(file) {
+       file.copy("cal_template.xlsx",file)
+     }
+   )
+   
+   ### This function creates the samples table template
+   
+   sam.table1 = function(){
+     n.cols= 4 
+     my.table = matrix("", nrow = 1, ncol = n.cols)
+     # ras.colnames = sapply(1:input$numberOfSampleReps, function(x){paste0("ras", x)})
+     colnames(my.table) = c('mids', 'mdi', 'ras1','ras2')
+     return(my.table)
+   }
+   
+   output$downloadSamTable1 <- downloadHandler(
+     
+     filename = function(){
+       paste("sample_template","xlsx",sep=".")
+     },
+     content = function(file) {
+       file.copy("sample_template.xlsx",file)
+     }
+   )
+   
+   ####merge calibration data talbes
+   ######standard options
+   
+   standardui1<-reactive(
+     
+     input$standard1
+   )
+   
+   output$standard_ui1<-renderUI({
+     
+     if(standardui1()==1){
+       tagList(
+         fluidRow(style='margin: 0px;',
+                  column(12,
+                         h3("Calibration standard inputs:",style = "color:steelblue"))),
+         
+         
+         fluidRow(style='margin: 0px;',
+                  column(6,
+                         wellPanel(
+                           textInput("wadm1",label =h4("Analyte working standard solution concentrations; Comma-separated entries for multiple inputs"), value="94.2, 95.5, 94.5",placeholder = "e.g. '94.2, 95.5, 94.5'"))),
+                  
+                  column(6,
+                         wellPanel(
+                           textInput("uwad1",label = h4("Uncertainties in working standard solution; Comma-separated entries for multiple inputs"),value="0.427, 0.434, 0.429",placeholder = "e.g. '0.427, 0.434, 0.429'")))),
+         
+         fluidRow(style='margin: 0px;',
+                  
+                  column(6,
+                         wellPanel(
+                           numericInput(
+                             "u_mid1", 
+                             label = h4("Uncertainty in masses (or volume) of internal standard solution added to calibrants (g, mL, etc.)"),
+                             value = 0.000015
+                           ))), 
+                  
+                  column(6,
+                         wellPanel(
+                           numericInput(
+                             "u_mad1", 
+                             label = h4("Uncertainty in masses (or volume) of analyte working standard solution added to calibrants(g, mL, etc.)"),
+                             value = 0.000015
+                           )))), 
+         
+         
+         fluidRow(style='margin: 0px;',
+                  column(12,
+                         h3("Sample preparation uncertainties:",style = "color:steelblue"))), 
+         fluidRow(style='margin: 0px;',
+                  column(6,
+                         wellPanel(
+                           numericInput(
+                             "u_mids1", 
+                             label = h4("Uncertainty in masses (or volume) of internal standard solution spiked into samples (g, mL, etc.)"),
+                             value = 0.000015
+                           ))), 
+                  
+                  column(6,
+                         wellPanel(        
+                           numericInput(
+                             "u_mdi1", 
+                             label = h4("Uncertainty in the masses (or volume) of substance sampled for measurement (serum, food, blood, etc.)"),
+                             value = 0.000015
+                           ))))
+       )
+     }else{
+       
+       tagList(
+         fluidRow(style='margin: 0px;',
+                  column(12,
+                         h3("Calibration standard inputs:",style = "color:steelblue"))),
+         
+         
+         fluidRow(style='margin: 0px;',
+                  column(6,
+                         wellPanel(
+                           textInput("wadm1",label =h4("Analyte working standard solution concentrations; Comma-separated entries for multiple inputs"), value="94.2, 95.5, 94.5",placeholder = "e.g. '94.2, 95.5, 94.5'"))),
+                  
+                  column(6,
+                         wellPanel(
+                           textInput("uwad1",label = h4("Uncertainties in working standard solution; Comma-separated entries for multiple inputs"),value="0.427, 0.434, 0.429",placeholder = "e.g. '0.427, 0.434, 0.429'")))),
+         
+         fluidRow(style='margin: 0px;',
+                  
+                  # column(6,
+                  #        wellPanel(
+                  #          numericInput(
+                  #            "u_mid", 
+                  #            label = h4("Uncertainty in masses (or volume) of internal standard solution added to calibrants (g, mL, etc.)"),
+                  #            value = 0.000015
+                  #          ))), 
+                  
+                  column(12,
+                         wellPanel(
+                           numericInput(
+                             "u_mad1", 
+                             label = h4("Uncertainty in masses (or volume) of analyte working standard solution added to calibrants(g, mL, etc.)"),
+                             value = 0.000015
+                           )))), 
+         
+         
+         fluidRow(style='margin: 0px;',
+                  column(12,
+                         h3("Sample preparation uncertainties:",style = "color:steelblue"))), 
+         fluidRow(style='margin: 0px;',
+                  # column(6,
+                  #        wellPanel(
+                  #          numericInput(
+                  #            "u_mids",
+                  #            label = NULL,
+                  #            value = 1
+                  #          ))),
+                  
+                  column(12,
+                         wellPanel(        
+                           numericInput(
+                             "u_mdi1", 
+                             label = h4("Uncertainty in the masses (or volume) of substance sampled for measurement (serum, food, blood, etc.)"),
+                             value = 0.000015
+                           ))))
+       )
+     }
+     
+   })
+   
+   
+   
+   
+   ####work solution of Calibration
+   
+   ####output tables
+   
+   
+   
+   output$calnum1 <- renderTable(cala(),striped = T,spacing = "l",align="c",digits = 0)
+   output$samplenum1 <- renderTable(samb(),striped = T,spacing = "l",align="c",digits = 0)
+   
+   ##################################################################
+   ##################################################################
+   ### Run Bayesian analysis ########################################
+   ##################################################################
+   ##################################################################
+   
+   outbayes1<- eventReactive(input$analysis,{
+     
+     N<-N1
+     NR<-NR1
+     #NWS<-NWS1
+     
+     M<-M1
+     MR<-MR1
+    
+     N_tables<-N_tables1
+     nfile<-N_tables1
+     
+     standard1<-reactive(
+       input$standard1
+     )
+     
+     choice<-reactive(
+       input$choice1
+     )
+     if (choice()==1){
+       ###NS==1
+       if(N_tables==1){
+     
+         caldata<-reactive({
+           
+           if (is.null(input$calfile1))
+             return()
+           else
+           {
+             csv=list()
+             csv=read.csv(input$calfile1$datapath[1])
+             return(csv)   
+           }
+           
+         })
+         
+         ####merge sample data talbes
+         
+         sampledata<-reactive({
+           
+           if (is.null(input$samplefile1))
+             return()
+           else
+           {
+             
+             csv=list()
+             csv=read.csv(input$samplefile1$datapath[1])
+             return(csv)
+           }
+           
+         })
+         
+         
+         wadm<<-reactive(
+           return(append(as.numeric(unlist(strsplit(gsub("\\s", "", input$wadm1),","))),1))
+           
+         )
+         
+         uwad<<-reactive(
+           return(append(as.numeric(unlist(strsplit(gsub("\\s", "", input$uwad1),","))),1))
+           
+         )
+         
+         ####
+         
+         
+         NWS <- reactive({
+           
+           inFile <- input$calfile1
+           if (is.null(input$calfile1)){
+             return(NULL)
+           }else{
+             
+             tmp<- read.csv(inFile$datapath[1])
+             
+             return(max(tmp$wsol))# #working solutions from  calibrationtable
+             
+             
+           }
+         })
+         
+         
+         umids<-reactive({
+           
+           if (standard1()==1){
+           
+           return(input$u_mid1)
+           }else{
+             
+             return(1)
+           }
+         })
+         
+         umads<-reactive(
+           
+           return(input$u_mad1)
+           
+         )
+         
+         
+         ####
+         
+         NS<-reactive({
+           
+           if (is.null(input$calfile1))
+             return()
+           else
+           {
+             NS<-nrow(input$calfile1)
+             return(NS)
+             
+           }
+           
+         })
+         
+         
+         
+         NT<-reactive(
+           
+           return(N*NR)
+           
+         )
+         
+         
+         
+         
+         midsm<<-reactive({
+           
+           if(standard1()==1){
+             return(caldata()$mid)
+             
+           }else{
+             
+             return(caldata()$mad/caldata()$mad)
+           }
+         })
+         
+         madsm<-reactive(
+           caldata()$mad
+         )
+         
+         wsol<-reactive(
+           caldata()$wsol
+         )
+         
+         
+         rac<- reactive({
+           
+           if (is.null(input$calfile1))
+             return()
+           else
+           {
+             
+             csv=list()
+             
+             for(i in 1: nfile)
+             {
+               csv[[i]]=read.csv(input$calfile1$datapath[i])
+               csv[[i]][1:3]<-NULL
+             }
+             
+             return(unlist(csv)) # rbind the csv
+           }
+           
+         })
+         
+         
+         ras<- reactive({
+           
+           if (is.null(input$samplefile1))
+             return()
+           else
+           {
+             nfile<-nrow(input$samplefile1)
+             
+             csv=list()
+             
+             for(i in 1: nfile)
+             {
+               csv[[i]]=read.csv(input$samplefile1$datapath[i])
+               csv[[i]][1:2]<-NULL
+             }
+             
+             return(unlist(csv)) # rbind the csv
+           }
+           
+         })
+         
+         
+         mdi<-reactive(
+           
+           sampledata()$mdi
+           
+         )
+         
+         ####standard
+         midsi<-reactive(
+           
+           if(standard1()==1){
+             return(sampledata()$mids)
+           }else{
+             
+             return(sampledata()$mdi/sampledata()$mdi)
+             
+           }
+         )
+         
+         MT<-reactive(
+           
+           return(M*MR)
+           
+         )
+         
+         
+         
+         sol<-reactive({
+           rep(1:N,NR)
+         })
+         
+         sampl<-reactive({
+           rep(1:M,NR)
+           
+         })   
+         
+         
+         #####
+         
+         linedata = list(
+           midsm=midsm(),
+           madsm=madsm(),
+           wsol=wsol(),
+           rac=rac(),
+           midsi=midsi(),
+           mdi=mdi(),
+           ras=ras(),
+           umids=umids(),
+           umads=umads(),
+           wadm= wadm(),
+           uwad=uwad(),
+           NWS=NWS()+1,
+           N=N,
+           M=M,
+           MT=MT(),
+           NT=NT(),
+           sol=sol(),
+           NR=NR,
+           sampl=sampl()
+         )
+         
+         
+         # 
+         require(R2OpenBUGS)
+         ##################################################################
+         ##################################################################
+         ### Define the model
+         ##################################################################
+         ##################################################################
+         
+         
+         linemodel<-function(){#calculate known mass ratios wac for N calibrants.
+           
+           midsprec<-1/(umids*umids)
+           madsprec<-1/(umads*umads)
+           
+           for(i in 1:NWS){
+             wadprec[i]<-1/(uwad[i]*uwad[i])
+             wad[i]~dnorm(wadm[i],wadprec[i])
+           }
+           
+           for(i in 1:N){mids[i]~dnorm(midsm[i],midsprec)
+             mads[i]~dnorm(madsm[i],madsprec)
+           }
+           for(i in 1:N){wac[i]<-wad[wsol[i]]*mads[i]/mids[i]}  
+           
+           #######
+           #calibration equation
+           
+           a~dnorm(0,1.0E-5)
+           b~dnorm(0,1.0E-5)
+           
+           xins~dnorm(0,0.0016)%_%I(0.001,)
+           chsqns~dgamma(0.5,0.5)
+           fitprec<-xins/sqrt(chsqns)
+           
+           for(i in 1:N){mean[i]<-a+b*wac[i]
+           predm[i]~dnorm(mean[i],fitprec)}
+           for(i in 1:NT){rac[i]~dnorm(mean[sol[i]],fitprec)
+           }
+           vyp<-1/sqrt(fitprec)
+           ###
+           # Compute the mass fraction wd
+           a.cut<-cut(a)
+           b.cut<-cut(b)
+           sigras~dgamma(1.0E-5,1.0E-5)
+           wdsig~dgamma(1.0E-3,1.0E-3)
+           
+           wd~dnorm(0,1.0E-5)
+           for(i in 1:M){wdm[i]~dnorm(wd,wdsig)
+             rasmean[i]<-a.cut+b.cut*wdm[i]*mdi[i]/midsi[i]
+             rasmeanp[i]~dnorm(rasmean[i],fitprec)}
+           for(i in 1:MT){ras[i]~dnorm(rasmeanp[sampl[i]],sigras)}
+           vsp<-1/sqrt(sigras) ### vs
+           hetp<-vsp/vyp*100 
+         }
+         
+         ##################################################################
+         ##################################################################
+         ### Run OpenBUGS
+         ##################################################################
+         ##################################################################
+         
+         withProgress(message = 'Running Bayes', style="old",value = 0, {
+           
+           
+           
+           lineinits<-function(){list(sigras=1,wdsig=1,a=0,b=1)}
+           
+           lineout<-bugs(data=linedata,
+                         inits=lineinits,
+                         parameters=c("a","b","wd","wdm","wac","mean","hetp","predm"),   
+                         model.file=linemodel,
+                         n.iter = input$niters, n.burnin = input$nburnin, n.thin = 10,n.chains = 1)#,debug=T)    
+         })
+         
+         ######
+         attach.bugs(lineout) ## imports the random draws for the parameters
+         cl<-NULL
+         
+         for(i in 1:N){
+           for(j in 1:NR){cl<-c(cl,quantile(predm[,i], 0.025))}}
+         
+         cl<-rep(unique(cl), NR)
+         cu<-NULL
+         for(i in 1:N){
+           for(j in 1:NR){cu<-c(cu,quantile(predm[,i], 0.925))}}
+         cu<-rep(unique(cu), NR)
+         
+         
+         
+         
+         outsize<-data.frame(ncal=N, calrep=NR, nsampl=M, samplrep=MR) 
+         outrega<-data.frame(mean=lineout$mean$a,sd=lineout$sd$a)
+         
+         outregb<-data.frame(mean=lineout$mean$b,sd=lineout$sd$b)
+         outwdm<-data.frame(mean=lineout$mean$wdm,sd=lineout$sd$wdm)
+         outmean<-data.frame(mean=lineout$mean$mean)
+         outwd<-data.frame(mean=lineout$mean$wd,sd=lineout$sd$wd )
+         outhetp<-data.frame(mean=lineout$mean$hetp)
+         
+         
+         
+         
+         ########## sets up the data to plot the regression line and calculate the rsq
+         
+         outwac=lineout$mean$wac
+         
+         lwac<-rep(outwac,NR)
+         
+         ############ calculates the rsq
+         ybar<-outmean
+         sst<-sum((rac()-mean(rac()))^2)
+         sse<-sum((rac()-ybar)^2)
+         rsq<-1-sse/sst
+         
+         ###Regression output###
+         
+         ########
+         bayesres=lineout$sims.list$wd
+         
+         
+         bind1 <-list(wadm=input$wadm1,uwad=input$uwad1,
                      u_mid=umids(),u_mad=input$u_mad1,
                      u_mids=input$u_mids1,u_mdi=input$u_mdi1,
                      coverage=input$coverage1,Number_iteration=input$niters1,Length_burnin=input$nburnin1,
@@ -7372,2552 +6568,2114 @@ shinyServer(function(input, output,session) {
                      b=outregb,
                      rsq=rsq,
                      vyp=outhetp)
-        
-        ########
-        
-        
-        
-        
-        
-        updateTabsetPanel(session = session, inputId = "results",selected = "Fit")
-        
-        
-        return(list(mcmcout=bayesres,bind1=bind1,rsq=rsq,outa=outrega,outb=outregb,rac=rac(),wac=lwac,linea=lineout$mean$a,lineb=lineout$mean$b,cl=cl,cu=cu,hetp=outhetp))
-        
-        #####N>1
-        
-      }else{
-        ####merge calibration data talbes
-        caldata<-reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            nfile<-nrow(input$calfile1)
-            
-            csv=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$calfile1$datapath[i])
-                
-              }
-              else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$calfile1$datapath[i],1)
-              }
-              
-              #csv[[i]]=read.csv(input$calfile1$datapath[i])
-              
+         
+         ########
+         
+         
+         
+      
+         
+         updateTabsetPanel(session = session, inputId = "results",selected = "Fit")
+         
+         
+         return(list(mcmcout=bayesres,bind1=bind1,rsq=rsq,outa=outrega,outb=outregb,rac=rac(),wac=lwac,linea=lineout$mean$a,lineb=lineout$mean$b,cl=cl,cu=cu,hetp=outhetp))
+         
+         #####N>1
+         
+       }else{
+         ####merge calibration data talbes
+         caldata<-reactive({
+           
+           if (is.null(input$calfile1))
+             return()
+           else
+           {
+             nfile<-nrow(input$calfile1)
+             
+             csv=list()
+             
+             for(i in 1: nfile)
+             {
+               csv[[i]]=read.csv(input$calfile1$datapath[i])
+               
+             }
+             
+             do.call(rbind,csv) # rbind the csv
+           }
+           
+         })
+         
+         ####merge sample data talbes
+         
+         sampledata<-reactive({
+           
+           if (is.null(input$samplefile1))
+             return()
+           else
+           {
+             nfile=nrow(input$samplefile1)
+             csv=list()
+             for(i in 1: nfile)
+             {
+               csv[[i]]=read.csv(input$samplefile1$datapath[i])
+               
+             }
+             
+             do.call(rbind,csv) # rbind the csv
+           }
+           
+         })
+         
+         
+         wadm<<-reactive(
+           return(append(as.numeric(unlist(strsplit(gsub("\\s", "", input$wadm1),","))),1))
+           
+         )
+         
+         uwad<<-reactive(
+           return(append(as.numeric(unlist(strsplit(gsub("\\s", "", input$uwad),","))),1))
+           
+         )
+         
+         ####
+         
+         
+         NWS <- reactive({
+           
+           inFile <- input$calfile1
+           if (is.null(input$calfile1)){
+             return(NULL)
+           }else{
+             
+             
+             tmp<- read.csv(inFile$datapath[1])
+             
+             return(max(tmp$wsol))# #working solutions from  calibrationtable
+             
+             
+           }
+         })
+         
+         #output$nws<-renderTable(NWS)
+         
+         standard1<-reactive(
+           input$standard1
+         )
+         
+         umids<-reactive({
+
+           if (is.null(input$calfile1))
+             return()
+           else
+           {
+
+              if (standard1()==1){
+             nfile<<-nrow(input$calfile1)
+
+             return(c(rep(input$u_mid1,nfile)))
+             }else{
+               nfile<<-nrow(input$calfile1)
+               return(c(rep(1,nfile)))
+
+             }
             }
-            
-            do.call(rbind,csv) # rbind the csv
-          }
-          
-        })
+         })
+
         
-        ####merge sample data talbes
-        
-        sampledata<-reactive({
-          
-          if (is.null(input$samplefile1))
-            return()
-          else
-          {
-            nfile=nrow(input$samplefile1)
-            csv=list()
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$samplefile1$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$samplefile1$datapath[i])
-                
-              }
-              else if(stringr::str_ends(input$samplefile1$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$samplefile1$datapath[i],1)
-              }
-              
-              #csv[[i]]=read.csv(input$samplefile1$datapath[i])
-              
+         
+         umads<<-reactive(
+           
+           return(c(rep(input$u_mad1,nfile)))
+           
+         )
+         
+         
+         ####
+         
+         NS<-reactive({
+           
+           if (is.null(input$calfile1))
+             return()
+           else
+           {
+             NS<-nrow(input$calfile1)
+             return(NS)
+             
+           }
+           
+         })
+         
+         
+         
+         NT<-reactive(
+           
+           length(caldata()$mid)
+           
+         )
+         
+         expc<-reactive({
+           
+           if (is.null(input$calfile1))
+             return()
+           else
+           {
+             nfile<-nrow(input$calfile1)
+             
+             
+             expc=list()
+             
+             for(i in 1: nfile)
+             {
+               nr= nrow(read.csv(input$calfile1$datapath[i]))
+               expc[[i]]<-(c(rep(1*i,each=nr)))
+               expc[[i]]<-t(expc[[i]])
+             } 
+             
+             
+             
+             as.vector(do.call(cbind, expc))
+             
+             
+           }
+           
+         })
+         
+         ######standard
+         
+         midsm<-reactive(
+           if (standard1()==1){
+           caldata()$mid
+         }else{
+         
+           caldata()$mad/caldata()$mad
+         }
+         )
+         
+         madsm<<-reactive(
+           caldata()$mad
+         )
+         
+         wsol<<-reactive(
+           caldata()$wsol
+         )
+         
+         
+         
+         NTT <- reactive({
+           
+           inFile <- input$calfile1
+           if (is.null(input$calfile1)){
+             return(NULL)
+           }else{
+             
+             
+             tmp=list()
+             
+             for(i in 1: nfile)
+             {
+               tmp[[i]]=read.csv(input$calfile1$datapath[i])
+               
+             }
+             
+             tmp<-do.call(rbind,tmp)
+             
+             NR<<-ncol(tmp)-3# number of replicates for each calibrant
+             NT<-nrow(tmp)
+             
+             NTT<-NR*NT
+             
+           }
+         })
+         
+         
+         expc1<-reactive({
+           
+           if (is.null(input$calfile1))
+             return()
+           else
+           {
+             nfile<-nrow(input$calfile1)
+             
+             
+             
+             expc1=list()
+             
+             for(i in 1: nfile)
+             {
+               nr<<-nrow(read.csv(input$calfile1$datapath[i]))
+               nrac<-ncol(read.csv(input$calfile1$datapath[i]))-3
+               n1<-nr*nrac
+               expc1[[i]]<-matrix(c(rep(1*i,each=n1)))
+               
+             } 
+             
+             
+             as.vector(do.call(rbind, expc1))
+             
+             
+           }
+           
+         })
+         
+         expc2<-reactive({
+           
+           if (is.null(input$calfile1))
+             return()
+           else
+           {
+             nfile<-nrow(input$calfile1)
+             
+             csv=list()
+             
+             k<-nrow(read.csv(input$calfile1$datapath[1]))
+             nrac<-ncol(read.csv(input$calfile1$datapath[1]))-3
+             
+             
+             csv[[1]]=c(rep(1:k,nrac))
+             
+             
+             for(i in 2: nfile)
+             {
+               
+               c=max(csv[[i-1]])+1
+               x=nrow(read.csv(input$calfile1$datapath[i]))
+               y=c+x-1
+               csv[[i]]=c(rep(c:y, nrac))
+               
+             }
+             
+             as.vector(unlist(csv))
+             
+             
+             
+           }
+           
+         })
+         
+         
+         
+         
+         rac<- reactive({
+           
+           if (is.null(input$calfile1))
+             return()
+           else
+           {
+             nfile<-nrow(input$calfile1)
+             
+             csv=list()
+             
+             for(i in 1: nfile)
+             {
+               csv[[i]]=read.csv(input$calfile1$datapath[i])
+               csv[[i]][1:3]<-NULL
+             }
+             
+             return(unlist(csv)) # rbind the csv
+           }
+           
+         })
+         
+         
+         ras<- reactive({
+           
+           if (is.null(input$samplefile1))
+             return()
+           else
+           {
+             nfile<-nrow(input$samplefile1)
+             
+             csv=list()
+             
+             for(i in 1: nfile)
+             {
+               csv[[i]]=read.csv(input$samplefile1$datapath[i])
+               csv[[i]][1:2]<-NULL
+             }
+             
+             return(unlist(csv)) # rbind the csv
+           }
+           
+         })
+         
+         
+         md<<-reactive(
+           
+           mdi<-sampledata()$mdi
+           
+         )
+         
+         
+         #####standard
+         
+         midsi<-reactive(
+           if (standard1()==1){
+           mdi<-sampledata()$mids
+           
+         }else{
+           
+           sampledata()$mdi/sampledata()$mdi
             }
-            
-            do.call(rbind,csv) # rbind the csv
-          }
-          
-        })
-        
-        
-        wadm<<-reactive(
-          return(append(as.numeric(unlist(strsplit(gsub("\\s", "", input$wadm1),","))),1))
-          
-        )
-        
-        uwad<<-reactive(
-          return(append(as.numeric(unlist(strsplit(gsub("\\s", "", input$uwad),","))),1))
-          
-        )
-        
-        ####
-        
-        
-        NWS <- reactive({
-          
-          inFile <- input$calfile1
-          if (is.null(input$calfile1)){
-            return(NULL)
-          }else{
-            
-            if(stringr::str_ends(input$calfile1$datapath[1], "csv")) {
-              tmp=read.csv(input$calfile1$datapath[1])
-              
-            }
-            else if(stringr::str_ends(input$calfile1$datapath[1], "xlsx")) {
-              tmp=read.xlsx(input$calfile1$datapath[1],1)
-            }
-            #tmp<- read.csv(inFile$datapath[1])
-            
-            return(max(tmp$wsol))# #working solutions from  calibrationtable
-            
-            
-          }
-        })
-        
-        
-        
-        standard1<-reactive(
-          input$standard1
-        )
-        
-        umids<-reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            
-            if (standard1()==1){
-              nfile<<-nrow(input$calfile1)
-              
-              return(c(rep(input$u_mid1,nfile)))
-            }else{
-              nfile<<-nrow(input$calfile1)
-              return(c(rep(0.000015,nfile)))
-              
-            }
-          }
-        })
-        
-        
-        
-        umads<-reactive({
-          
-          if(standard1()==1){
-            return(c(rep(input$u_mad,nfile)))
-          }else{
-            return(c(rep(0.000015,nfile)))
-            
-          }
-          
-        })
-        
-        
-        ####
-        
-        NS<-reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            NS<-nrow(input$calfile1)
-            return(NS)
-            
-          }
-          
-        })
-        
-        
-        
-        NT<-reactive(
-          
-          length(caldata()$mid)
-          
-        )
-        
-        expc<-reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            nfile<-nrow(input$calfile1)
-            
-            
-            expc=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-                nr= nrow(read.csv(input$calfile1$datapath[i]))
-                
-              }
-              else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                nr= nrow(read.xlsx(input$calfile1$datapath[i],1))
-              }
-              
-              # nr= nrow(read.csv(input$calfile1$datapath[i]))
-              expc[[i]]<-(c(rep(1*i,each=nr)))
-              expc[[i]]<-t(expc[[i]])
-            } 
-            
-            
-            
-            as.vector(do.call(cbind, expc))
-            
-            
-          }
-          
-        })
-        
-        ######standard
-        
-        midsm<-reactive(
-          if (standard1()==1){
-            caldata()$mid
-          }else{
-            
-            caldata()$mad/caldata()$mad
-          }
-        )
-        
-        madsm<<-reactive(
-          caldata()$mad
-        )
-        
-        wsol<<-reactive(
-          caldata()$wsol
-        )
-        
-        
-        
-        NTT <- reactive({
-          
-          inFile <- input$calfile1
-          if (is.null(input$calfile1)){
-            return(NULL)
-          }else{
-            
-            
-            tmp=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-                tmp[[i]]= read.csv(input$calfile1$datapath[i])
-                
-              }
-              else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                tmp[[i]]=read.xlsx(input$calfile1$datapath[i],1)
-              }
-              #tmp[[i]]=read.csv(input$calfile1$datapath[i])
-              
-            }
-            
-            tmp<-do.call(rbind,tmp)
-            
-            NR<<-ncol(tmp)-3# number of replicates for each calibrant
-            NT<-nrow(tmp)
-            
-            NTT<-NR*NT
-            
-          }
-        })
-        
-        
-        expc1<-reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            nfile<-nrow(input$calfile1)
-            
-            
-            
-            expc1=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-                nr<<-nrow(read.csv(input$calfile1$datapath[i]))
-                nrac<-ncol(read.csv(input$calfile1$datapath[i]))-3
-                
-              }
-              else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                nr<<-nrow(read.xlsx(input$calfile1$datapath[i],1))
-                nrac<-ncol(read.xlsx(input$calfile1$datapath[i],1))-3
-              }
-              # nr<<-nrow(read.csv(input$calfile1$datapath[i]))
-              # nrac<-ncol(read.csv(input$calfile1$datapath[i]))-3
-              n1<-nr*nrac
-              expc1[[i]]<-matrix(c(rep(1*i,each=n1)))
-              
-            } 
-            
-            
-            as.vector(do.call(rbind, expc1))
-            
-            
-          }
-          
-        })
-        
-        expc2<-reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            nfile<-nrow(input$calfile1)
-            
-            csv=list()
-            
-            if(stringr::str_ends(input$calfile1$datapath[1], "csv")) {
-              k<-nrow(read.csv(input$calfile1$datapath[1]))
-              nrac<-ncol(read.csv(input$calfile1$datapath[1]))-3
-              
-            }
-            else if(stringr::str_ends(input$calfile1$datapath[1], "xlsx")) {
-              k<-nrow(read.xlsx(input$calfile1$datapath[1],1))
-              nrac<-ncol(read.xlsx(input$calfile1$datapath[1],1))-3
-              
-            }
-            
-            #k<-nrow(read.csv(input$calfile1$datapath[1]))
-            #  nrac<-ncol(read.csv(input$calfile1$datapath[1]))-3
-            
-            
-            csv[[1]]=c(rep(1:k,nrac))
-            
-            
-            for(i in 2: nfile)
-            {
-              
-              c=max(csv[[i-1]])+1
-              
-              if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-                x=nrow(read.csv(input$calfile1$datapath[i]))
-                
-              }
-              else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                x=nrow(read.xlsx(input$calfile1$datapath[i],1))
-                
-              }
-              
-              #x=nrow(read.csv(input$calfile1$datapath[i]))
-              y=c+x-1
-              csv[[i]]=c(rep(c:y, nrac))
-              
-            }
-            
-            as.vector(unlist(csv))
-            
-            
-            
-          }
-          
-        })
-        
-        
-        
-        
-        rac<- reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            nfile<-nrow(input$calfile1)
-            
-            csv=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$calfile1$datapath[i])
-                
-              }
-              else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$calfile1$datapath[i],1)
-                
-              }
-              #csv[[i]]=read.csv(input$calfile1$datapath[i])
-              csv[[i]][1:3]<-NULL
-            }
-            
-            return(unlist(csv)) # rbind the csv
-          }
-          
-        })
-        
-        
-        ras<- reactive({
-          
-          if (is.null(input$samplefile1))
-            return()
-          else
-          {
-            nfile<-nrow(input$samplefile1)
-            
-            csv=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$samplefile1$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$samplefile1$datapath[i])
-                
-              }
-              else if(stringr::str_ends(input$samplefile1$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$samplefile1$datapath[i],1)
-              }
-              
-              #csv[[i]]=read.csv(input$samplefile1$datapath[i])
-              csv[[i]][1:2]<-NULL
-            }
-            
-            return(unlist(csv)) # rbind the csv
-          }
-          
-        })
-        
-        
-        md<<-reactive(
-          
-          mdi<-sampledata()$mdi
-          
-        )
-        
-        
-        #####standard
-        
-        midsi<-reactive(
-          if (standard1()==1){
-            mdi<-sampledata()$mids
-            
-          }else{
-            
-            sampledata()$mdi/sampledata()$mdi
-          }
-        )
-        
-        MT<<-reactive(
-          
-          length(sampledata()$mids)
-          
-        )
-        
-        MTT <- reactive({
-          
-          inFile <- input$samplefile1
-          if (is.null(input$samplefile1)){
-            return(NULL)
-          }else{
-            
-            
-            tmp=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$samplefile1$datapath[i], "csv")) {
-                tmp[[i]]=read.csv(input$samplefile1$datapath[i])
-                
-              }
-              else if(stringr::str_ends(input$samplefile1$datapath[i], "xlsx")) {
-                tmp[[i]]=read.xlsx(input$samplefile1$datapath[i],1)
-              }
-              
-              # tmp[[i]]=read.csv(input$samplefile1$datapath[i])
-              
-            }
-            
-            tmp<-do.call(rbind,tmp)
-            
-            NR<<-ncol(tmp)-2# number of replicates for each calibrant
-            NT<-nrow(tmp)
-            
-            NTT<-NR*NT
-            
-          }
-        })
-        
-        exp<-reactive({
-          
-          if (is.null(input$samplefile1))
-            return()
-          else
-          {
-            nfile<-nrow(input$samplefile1)
-            
-            
-            exp=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$samplefile1$datapath[i], "csv")) {
-                nr= nrow(read.csv(input$samplefile1$datapath[i]))
-                
-              }
-              else if(stringr::str_ends(input$samplefile1$datapath[i], "xlsx")) {
-                nr= nrow(read.xlsx(input$samplefile1$datapath[i],1))
-              }
-              
-              #nr= nrow(read.csv(input$samplefile1$datapath[i]))
-              exp[[i]]<-(c(rep(1*i,each=nr)))
-              exp[[i]]<-t(exp[[i]])
-            } 
-            
-            as.vector(do.call(cbind, exp))
-            
-          }
-          
-        })
-        
-        
-        expr<-reactive({
-          
-          if (is.null(input$samplefile1))
-            return()
-          else
-          {
-            nfile<<-nrow(input$samplefile1)
-            
-            
-            
-            expr=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$samplefile1$datapath[i], "csv")) {
-                nr<<-nrow(read.csv(input$samplefile1$datapath[i]))
-                nrac<-ncol(read.csv(input$samplefile1$datapath[i]))-2
-                
-              }
-              else if(stringr::str_ends(input$samplefile1$datapath[i], "xlsx")) {
-                nr<<-nrow(read.xlsx(input$samplefile1$datapath[i],1))
-                nrac<-ncol(read.xlsx(input$samplefile1$datapath[i],1))-2
-              }
-              # nr<<-nrow(read.csv(input$samplefile1$datapath[i]))
-              # nrac<-ncol(read.csv(input$samplefile1$datapath[i]))-2
-              n1<-nr*nrac
-              expr[[i]]<-matrix(c(rep(1*i,each=n1)))
-              
-            } 
-            
-            
-            as.vector(do.call(rbind, expr))
-            
-            
-          }
-          
-        })
-        
-        expr2<-reactive({
-          
-          if (is.null(input$samplefile1))
-            return()
-          else
-          {
-            nfile<-nrow(input$samplefile1)
-            
-            csv=list()
-            
-            if(stringr::str_ends(input$samplefile1$datapath[1], "csv")) {
-              k<-nrow(read.csv(input$samplefile1$datapath[1]))
-              nras<-ncol(read.csv(input$samplefile1$datapath[1]))-2
-              
-            }
-            else if(stringr::str_ends(input$samplefile1$datapath[1], "xlsx")) {
-              k<-nrow(read.xlsx(input$samplefile1$datapath[1],1))
-              nras<-ncol(read.xlsx(input$samplefile1$datapath[1],1))-2
-            }
-            
-            #k<-nrow(read.csv(input$samplefile1$datapath[1]))
-            # nras<-ncol(read.csv(input$samplefile1$datapath[1]))-2
-            
-            
-            csv[[1]]=c(rep(1:k,nras))
-            
-            
-            for(i in 2: nfile)
-            {
-              
-              c=max(csv[[i-1]])+1
-              
-              
-              if(stringr::str_ends(input$samplefile1$datapath[i], "csv")) {
-                x=nrow(read.csv(input$samplefile1$datapath[i]))
-                
-              }
-              else if(stringr::str_ends(input$samplefile1$datapath[i], "xlsx")) {
-                x=nrow(read.xlsx(input$samplefile1$datapath[i],1))
-              }
-              
-              #x=nrow(read.csv(input$samplefile1$datapath[i]))
-              y=c+x-1
-              csv[[i]]=c(rep(c:y, nras))
-              
-            }
-            
-            as.vector(unlist(csv))
-            
-            
-            
-          }
-          
-        })
-        
-        nfile<-reactive({
-          
-          if (!is.null(input$calfile1))
-          {
-            nfile<-nrow(input$calfile1)
-          }
-        })
-        
-        nrac<-reactive({
-          
-          if (!is.null(input$calfile1))
-          {
-            
-            if(stringr::str_ends(input$calfile1$datapath[1], "csv")) {
-              nrac<-ncol(read.csv(input$calfile1$datapath[1]))-3
-              
-            }
-            else if(stringr::str_ends(input$calfile1$datapath[1], "xlsx")) {
-              nrac<-ncol(read.xlsx(input$calfile1$datapath[1],1))-3
-            }
-            # nrac<-ncol(read.csv(input$calfile1$datapath[1]))-3
-            
-          }
-        })
-        
-        vecwac <- reactive({
-          
-          if (!is.null(input$calfile1))
-          {
-            
-            vec=list()
-            for(i in 1: nfile){
-              
-              if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-                vec[[i]]<-nrow(read.csv(input$calfile1$datapath[i]))
-                
-              }
-              else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                vec[[i]]<-nrow(read.xlsx(input$calfile1$datapath[i],1))
-              }
-              #vec[[i]]<-nrow(read.csv(input$calfile1$datapath[i]))
-            }
-            return(vec)
-          }
-        })
-        
-        vecrac <- reactive({
-          
-          if (!is.null(input$calfile1))
-          {
-            
-            vecrac=list()
-            for(i in 1: nfile){
-              
-              if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-                vecrac[[i]]<-nrac()*nrow(read.csv(input$calfile1$datapath[i]))
-                
-              }
-              else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                vecrac[[i]]<-nrac()*nrow(read.xlsx(input$calfile1$datapath[i],1))
-              }
-              # vecrac[[i]]<-nrac()*nrow(read.csv(input$calfile1$datapath[i]))
-            }
-            return(vecrac)
-          }
-        })
-        
-        vecras <- reactive({
-          
-          if (!is.null(input$samplefile1))
-          {
-            
-            vecras=list()
-            for(i in 1: nfile){
-              
-              if(stringr::str_ends(input$samplefile1$datapath[i], "csv")) {
-                vecras[[i]]<-nrac()*nrow(read.csv(input$samplefile1$datapath[i]))
-                
-              }
-              else if(stringr::str_ends(input$samplefile1$datapath[i], "xlsx")) {
-                vecras[[i]]<-nrac()*nrow(read.xlsx(input$samplefile1$datapath[i],1))
-              }
-              
-              # vecras[[i]]<-nrac()*nrow(read.csv(input$samplefile1$datapath[i]))
-            }
-            return(vecras)
-          }
-        })
-        
-        linedata<-list(umids=umids(),
-                       umads=umads(),
-                       wadm=wadm(),
-                       uwad=uwad(),
-                       NWS=NWS()+1,
-                       NS=NS(),
-                       NT=NT(),
-                       expc=expc(),
-                       midsm=midsm(),
-                       madsm=madsm(),
-                       wsol=wsol(), 
-                       NTT=NTT(), 
-                       expc1=expc1(),
-                       expc2=expc2(),
-                       rac=rac(),
-                       ras=ras(),
-                       MT=MT(),MTT=MTT(),
-                       exp=exp(),
-                       midsi=midsi(),
-                       md=md(),
-                       expr=expr(),
-                       expr2=expr2())
-        
-        
-        require(R2OpenBUGS)
-        # #   
-        # #   ##################################################################
-        # #   ##################################################################
-        # #   ### Define the model
-        # #   ##################################################################
-        # #   ##################################################################
-        # #   
-        # #   
-        linemodel<-function(){####this program uses NS number of input tables. 
-          ### NT is the total number of elements of midsm and madsm (total number of calibrants). 
-          ### expc gives the experiment designation for each element in midsm and madsm. NTT is the total number of measurements in the calibration experiment.
-          ### expc1 gives the experiment label for each observation in rac, expc2 gives calibrant designation for each rac.
-          ### MT gives the total number of samples, MTT gives the total number of observations in the quantitation experiment 
-          ### exp gives the experiment designation for each sample, expr gives the experiment designation for each element in ras, 
-          ### expr2 gives the sample designation for each element in ras.
-          
-          
-          for(i in 1:NWS){wadprec[i]<-1/(uwad[i]*uwad[i])
-          wad[i]~dnorm(wadm[i],wadprec[i])}
-          wadmean<-mean(wad[])
-          
-          for(i in 1:NS){midsprec[i]<-1/(umids[i]*umids[i])
-          madsprec[i]<-1/(umads[i]*umads[i])}
-          
-          
-          for(i in 1:NT){
-            mids[i]~dnorm(midsm[i],midsprec[expc[i]])
-            mads[i]~dnorm(madsm[i],madsprec[expc[i]])
-            ratio[i]<-mads[i]/mids[i] 
-            wac[i]<-wad[wsol[i]]* ratio[i] } 
-          
-          #######
-          #calibration equation
-          for(i in 1:NS){
-            a[i]~dnorm(0,1.0E-5)
-            b[i]~dnorm(0,1.0E-5)
-            
-            xins[i]~dnorm(0,0.0016)%_%I(0.001,)
-            chsqns[i]~dgamma(0.5,0.5)
-            fitprec[i]<-xins[i]/sqrt(chsqns[i])
-            vyp[i]<-1/sqrt(fitprec[i])
-          }
-          
-          for(i in 1:NTT){mean[i]<-a[expc1[i]]+b[expc1[i]]*wac[expc2[i]]
-          rac[i]~dnorm(mean[i],fitprec[expc1[i]])
-          predm[i]~dnorm(mean[i],fitprec[expc1[i]])
-          
-          }
-          
-          
-          ###
-          # Compute the mass fraction wd
-          for(i in 1:NS){
-            a.cut[i]<-cut(a[i])
-            b.cut[i]<-cut(b[i])
-            xinsi[i]~dnorm(0,0.0016)%_%I(0.001,)
-            chsqnsi[i]~dgamma(0.5,0.5)
-            sigras[i]<-xinsi[i]/sqrt(chsqnsi[i])
-            vsp[i]<-1/sqrt(sigras[i])
-            hetp[i]<-vsp[i]/vyp[i]*100 
-            
-            xinsw[i]~dnorm(0,0.0016)%_%I(0.001,)
-            chsqnsw[i]~dgamma(0.5,0.5)
-            wdsig[i]<-xinsw[i]/sqrt(chsqnsw[i])
-            wd[i]~dnorm(0,1.0E-5)}
-          
-          for(i in 1:MT){
-            wdm[i]~dnorm(wd[exp[i]],wdsig[exp[i]])
-            rasmean[i]<-a.cut[exp[i]]+b.cut[exp[i]]*wdm[i]*md[i]/midsi[i]
-            rasmeanp[i]~dnorm(rasmean[i],fitprec[exp[i]])}
-          
-          
-          
-          for(i in 1:MTT){
-            ras[i]~dnorm(rasmeanp[expr2[i]],sigras[expr[i]])
-            
-          } 
-          
-          # 
-          
-          #############################################
-          T~dcat(P[])
-          P[1:NS]~ddirich(alpha[])
-          for(i in 1:NS){alpha[i]<-1}
-          mumeanfin<-wd[T]
-          
-        }
-        
-        ##################################################################
-        ##################################################################
-        ### Run OpenBUGS
-        ##################################################################
-        ##################################################################
-        
-        withProgress(message = 'Running Bayes', style="old",value = 0, {
-          
-          lineinits<-function(){list(a=c(0,0),b=c(1,1),wd=c(0,0))}
-          
-          lineout<-bugs(data=linedata,
-                        inits=lineinits,
-                        parameters=c("wd","wdm","mumeanfin","wac","a","b","hetp","mean","predm"),   
-                        model.file=linemodel,
-                        n.iter = 10000, n.burnin = 5000, n.thin = 10,n.chains =1)#,debug=T)
-        })
-        
-        ###########################################
-        ### additional result generation
-        
-        attach.bugs(lineout) ## imports the random draws for the parameters
-        
-        outrega<-data.frame(mean=lineout$mean$a,sd=lineout$sd$a)
-        outregb<-data.frame(mean=lineout$mean$b,sd=lineout$sd$b)
-        outwdm<-data.frame(mean=lineout$mean$wdm,sd=lineout$sd$wdm)
-        outmean<-data.frame(mean=lineout$mean$mean)
-        outwd<-data.frame(mean=lineout$mean$wd,sd=lineout$sd$wd )
-        outmumeanfin<-data.frame(mean=lineout$mean$mumeanfin,sd=lineout$sd$mumeanfin )
-        outhetp<-lineout$mean$hetp
-        ########## sets up the data to plot the regression line and calculate the rsq
-        
-        require(data.table)
-        
-        
-        ############ calculates the rsq
-        
-        ybar<-split(outmean,rep(1:nfile,vecrac()))
-        rac_rsq<-split(rac(),rep(1:nfile,vecrac()))
-        
-        sst=list()
-        sse=list()
-        rsq=list()
-        for(i in 1: nfile)
-        {
-          sst[[i]]<-sum((rac_rsq[[i]]-mean(rac_rsq[[i]]))^2)
-          sse[[i]]<-sum((rac_rsq[[i]]-ybar[[i]])^2)
-          rsq[[i]]<-1-(sse[[i]]/sst[[i]])
-        }
-        
-        n_rsq<-unlist(rsq)
-        
-        
-        ####calibration plot ##
-        
-        ##get wac vectors
-        
-        outwac=lineout$mean$wac
-        
-        lwac<-split(outwac,rep(1:nfile,vecwac()))
-        
-        lwac<-lapply(lwac,rep,nrac())
-        
-        
-        lrac<-split(rac(),rep(1:nfile,vecrac()))
-        
-        cl=NULL
-        
-        length=length(lineout$mean$predm)
-        predm=lineout$sims.lis$predm
-        for(i in 1:length){
-          cl[[i]]<-quantile(predm[,i],0.025)
-        }
-        
-        cl<-split(cl,rep(1:nfile,vecrac()))
-        
-        cu=NULL
-        for(i in 1:length){
-          cu[[i]]<-quantile(predm[,i],0.925)
-        }
-        
-        cu<-split(cu,rep(1:nfile,vecrac()))
-        
-        
-        ###Regression output###
-        
-        ########download
-        
-        bayesres=lineout$sims.list$mumeanfin
-        
-        bind1 <-list(wadm=input$wadm1,uwad=input$uwad1,
-                     u_mid=umids(),u_mad=input$u_mad1,
-                     u_mids=input$u_mids1,u_mdi=input$u_mdi1,
-                     coverage=input$coverage1,Number_iteration=input$niters1,Length_burnin=input$nburnin1,
-                     mean=mean(bayesres),sd=sd(bayesres),median=median(bayesres),
-                     a=outrega,
-                     b=outregb,
-                     rsq=n_rsq,
-                     vyp=outhetp)
-        
-        
-        #######
-        
-        
-        updateTabsetPanel(session = session, inputId = "results",selected = "Fit")
-        #waiter_hide()
-        
-        
-        return(list(mcmcout=bayesres,bind1=bind1,rsq=n_rsq, rac=lrac,wac=lwac,outa=outrega,linea=lineout$mean$a,lineb=lineout$mean$b,outb=outregb,cl=cl,cu=cu,hetp=outhetp))
-        
-      }
-      ###choice=RF
-    }else{
+         )
+         
+         MT<<-reactive(
+           
+           length(sampledata()$mids)
+           
+         )
+         
+         MTT <- reactive({
+           
+           inFile <- input$samplefile1
+           if (is.null(input$samplefile1)){
+             return(NULL)
+           }else{
+             
+             
+             tmp=list()
+             
+             for(i in 1: nfile)
+             {
+               tmp[[i]]=read.csv(input$samplefile1$datapath[i])
+               
+             }
+             
+             tmp<-do.call(rbind,tmp)
+             
+             NR<<-ncol(tmp)-2# number of replicates for each calibrant
+             NT<-nrow(tmp)
+             
+             NTT<-NR*NT
+             
+           }
+         })
+         
+         exp<-reactive({
+           
+           if (is.null(input$samplefile1))
+             return()
+           else
+           {
+             nfile<-nrow(input$samplefile1)
+             
+             
+             exp=list()
+             
+             for(i in 1: nfile)
+             {
+               nr= nrow(read.csv(input$samplefile1$datapath[i]))
+               exp[[i]]<-(c(rep(1*i,each=nr)))
+               exp[[i]]<-t(exp[[i]])
+             } 
+             
+             as.vector(do.call(cbind, exp))
+             
+           }
+           
+         })
+         
+         
+         expr<-reactive({
+           
+           if (is.null(input$samplefile1))
+             return()
+           else
+           {
+             nfile<<-nrow(input$samplefile1)
+             
+             
+             
+             expr=list()
+             
+             for(i in 1: nfile)
+             {
+               nr<<-nrow(read.csv(input$samplefile1$datapath[i]))
+               nrac<-ncol(read.csv(input$samplefile1$datapath[i]))-2
+               n1<-nr*nrac
+               expr[[i]]<-matrix(c(rep(1*i,each=n1)))
+               
+             } 
+             
+             
+             as.vector(do.call(rbind, expr))
+             
+             
+           }
+           
+         })
+         
+         expr2<-reactive({
+           
+           if (is.null(input$samplefile1))
+             return()
+           else
+           {
+             nfile<-nrow(input$samplefile1)
+             
+             csv=list()
+             
+             k<-nrow(read.csv(input$samplefile1$datapath[1]))
+             nras<-ncol(read.csv(input$samplefile1$datapath[1]))-2
+             
+             
+             csv[[1]]=c(rep(1:k,nras))
+             
+             
+             for(i in 2: nfile)
+             {
+               
+               c=max(csv[[i-1]])+1
+               x=nrow(read.csv(input$samplefile1$datapath[i]))
+               y=c+x-1
+               csv[[i]]=c(rep(c:y, nras))
+               
+             }
+             
+             as.vector(unlist(csv))
+             
+             
+             
+           }
+           
+         })
+         
+         nfile<-reactive({
+           
+           if (!is.null(input$calfile1))
+           {
+             nfile<-nrow(input$calfile1)
+           }
+         })
+         
+         nrac<-reactive({
+           
+           if (!is.null(input$calfile1))
+           {
+             nrac<-ncol(read.csv(input$calfile1$datapath[1]))-3
+             
+           }
+         })
+         
+         vecwac <- reactive({
+           
+           if (!is.null(input$calfile1))
+           {
+             
+             vec=list()
+             for(i in 1: nfile){
+               vec[[i]]<-nrow(read.csv(input$calfile1$datapath[i]))
+             }
+             return(vec)
+           }
+         })
+         
+         vecrac <- reactive({
+           
+           if (!is.null(input$calfile1))
+           {
+             
+             vecrac=list()
+             for(i in 1: nfile){
+               vecrac[[i]]<-nrac()*nrow(read.csv(input$calfile1$datapath[i]))
+             }
+             return(vecrac)
+           }
+         })
+         
+         vecras <- reactive({
+           
+           if (!is.null(input$samplefile1))
+           {
+             
+             vecras=list()
+             for(i in 1: nfile){
+               vecras[[i]]<-nrac()*nrow(read.csv(input$samplefile1$datapath[i]))
+             }
+             return(vecras)
+           }
+         })
+      
+         linedata<-list(umids=umids(),
+                        umads=umads(),
+                        wadm=wadm(),
+                        uwad=uwad(),
+                        NWS=NWS()+1,
+                        NS=NS(),
+                        NT=NT(),
+                        expc=expc(),
+                        midsm=midsm(),
+                        madsm=madsm(),
+                        wsol=wsol(), 
+                        NTT=NTT(), 
+                        expc1=expc1(),
+                        expc2=expc2(),
+                        rac=rac(),
+                        ras=ras(),
+                        MT=MT(),MTT=MTT(),
+                        exp=exp(),
+                        midsi=midsi(),
+                        md=md(),
+                        expr=expr(),
+                        expr2=expr2())
+         
+         
+         require(R2OpenBUGS)
+         # #   
+         # #   ##################################################################
+         # #   ##################################################################
+         # #   ### Define the model
+         # #   ##################################################################
+         # #   ##################################################################
+         # #   
+         # #   
+         linemodel<-function(){####this program uses NS number of input tables. 
+           ### NT is the total number of elements of midsm and madsm (total number of calibrants). 
+           ### expc gives the experiment designation for each element in midsm and madsm. NTT is the total number of measurements in the calibration experiment.
+           ### expc1 gives the experiment label for each observation in rac, expc2 gives calibrant designation for each rac.
+           ### MT gives the total number of samples, MTT gives the total number of observations in the quantitation experiment 
+           ### exp gives the experiment designation for each sample, expr gives the experiment designation for each element in ras, 
+           ### expr2 gives the sample designation for each element in ras.
+           
+           
+           for(i in 1:NWS){wadprec[i]<-1/(uwad[i]*uwad[i])
+           wad[i]~dnorm(wadm[i],wadprec[i])}
+           wadmean<-mean(wad[])
+           
+           for(i in 1:NS){midsprec[i]<-1/(umids[i]*umids[i])
+           madsprec[i]<-1/(umads[i]*umads[i])}
+           
+           
+           for(i in 1:NT){
+             mids[i]~dnorm(midsm[i],midsprec[expc[i]])
+             mads[i]~dnorm(madsm[i],madsprec[expc[i]])
+             ratio[i]<-mads[i]/mids[i] 
+             wac[i]<-wad[wsol[i]]* ratio[i] } 
+           
+           #######
+           #calibration equation
+           for(i in 1:NS){
+             a[i]~dnorm(0,1.0E-5)
+             b[i]~dnorm(0,1.0E-5)
+             
+             xins[i]~dnorm(0,0.0016)%_%I(0.001,)
+             chsqns[i]~dgamma(0.5,0.5)
+             fitprec[i]<-xins[i]/sqrt(chsqns[i])
+             vyp[i]<-1/sqrt(fitprec[i])
+           }
+           
+           for(i in 1:NTT){mean[i]<-a[expc1[i]]+b[expc1[i]]*wac[expc2[i]]
+           rac[i]~dnorm(mean[i],fitprec[expc1[i]])
+           predm[i]~dnorm(mean[i],fitprec[expc1[i]])
+           
+           }
+           
+           
+           ###
+           # Compute the mass fraction wd
+           for(i in 1:NS){
+             a.cut[i]<-cut(a[i])
+             b.cut[i]<-cut(b[i])
+             xinsi[i]~dnorm(0,0.0016)%_%I(0.001,)
+             chsqnsi[i]~dgamma(0.5,0.5)
+             sigras[i]<-xinsi[i]/sqrt(chsqnsi[i])
+             vsp[i]<-1/sqrt(sigras[i])
+             hetp[i]<-vsp[i]/vyp[i]*100 
+             
+             xinsw[i]~dnorm(0,0.0016)%_%I(0.001,)
+             chsqnsw[i]~dgamma(0.5,0.5)
+             wdsig[i]<-xinsw[i]/sqrt(chsqnsw[i])
+             wd[i]~dnorm(0,1.0E-5)}
+           
+           for(i in 1:MT){
+             wdm[i]~dnorm(wd[exp[i]],wdsig[exp[i]])
+             rasmean[i]<-a.cut[exp[i]]+b.cut[exp[i]]*wdm[i]*md[i]/midsi[i]
+             rasmeanp[i]~dnorm(rasmean[i],fitprec[exp[i]])}
+           
+           
+           
+           for(i in 1:MTT){
+             ras[i]~dnorm(rasmeanp[expr2[i]],sigras[expr[i]])
+             
+           } 
+           
+           # 
+           
+           #############################################
+           T~dcat(P[])
+           P[1:NS]~ddirich(alpha[])
+           for(i in 1:NS){alpha[i]<-1}
+           mumeanfin<-wd[T]
+           
+         }
+         
+         ##################################################################
+         ##################################################################
+         ### Run OpenBUGS
+         ##################################################################
+         ##################################################################
+         
+         withProgress(message = 'Running Bayes', style="old",value = 0, {
+           
+           lineinits<-function(){list(a=c(0,0),b=c(1,1),wd=c(0,0))}
+           
+           lineout<-bugs(data=linedata,
+                         inits=lineinits,
+                         parameters=c("wd","wdm","mumeanfin","wac","a","b","hetp","mean","predm"),   
+                         model.file=linemodel,
+                         n.iter = 10000, n.burnin = 5000, n.thin = 10,n.chains =1)#,debug=T)
+         })
+         
+         ###########################################
+         ### additional result generation
+         
+         attach.bugs(lineout) ## imports the random draws for the parameters
+         
+         outrega<-data.frame(mean=lineout$mean$a,sd=lineout$sd$a)
+         outregb<-data.frame(mean=lineout$mean$b,sd=lineout$sd$b)
+         outwdm<-data.frame(mean=lineout$mean$wdm,sd=lineout$sd$wdm)
+         outmean<-data.frame(mean=lineout$mean$mean)
+         outwd<-data.frame(mean=lineout$mean$wd,sd=lineout$sd$wd )
+         outmumeanfin<-data.frame(mean=lineout$mean$mumeanfin,sd=lineout$sd$mumeanfin )
+         outhetp<-lineout$mean$hetp
+         ########## sets up the data to plot the regression line and calculate the rsq
+         
+         require(data.table)
+         
+         
+         ############ calculates the rsq
+         
+         ybar<-split(outmean,rep(1:nfile,vecrac()))
+         rac_rsq<-split(rac(),rep(1:nfile,vecrac()))
+         
+         sst=list()
+         sse=list()
+         rsq=list()
+         for(i in 1: nfile)
+         {
+           sst[[i]]<-sum((rac_rsq[[i]]-mean(rac_rsq[[i]]))^2)
+           sse[[i]]<-sum((rac_rsq[[i]]-ybar[[i]])^2)
+           rsq[[i]]<-1-(sse[[i]]/sst[[i]])
+         }
+         
+         n_rsq<-unlist(rsq)
+         
+         
+         ####calibration plot ##
+         
+         ##get wac vectors
+         
+         outwac=lineout$mean$wac
+         
+         lwac<-split(outwac,rep(1:nfile,vecwac()))
+         
+         lwac<-lapply(lwac,rep,nrac())
+         
+         
+         lrac<-split(rac(),rep(1:nfile,vecrac()))
+         
+         cl=NULL
+         
+         length=length(lineout$mean$predm)
+         predm=lineout$sims.lis$predm
+         for(i in 1:length){
+           cl[[i]]<-quantile(predm[,i],0.025)
+         }
+         
+         cl<-split(cl,rep(1:nfile,vecrac()))
+         
+         cu=NULL
+         for(i in 1:length){
+           cu[[i]]<-quantile(predm[,i],0.925)
+         }
+         
+         cu<-split(cu,rep(1:nfile,vecrac()))
+         
+         
+         ###Regression output###
+         
+         ########download
+         
+         bayesres=lineout$sims.list$mumeanfin
+         
+         bind1 <-list(wadm=input$wadm1,uwad=input$uwad1,
+                      u_mid=umids(),u_mad=input$u_mad1,
+                      u_mids=input$u_mids1,u_mdi=input$u_mdi1,
+                      coverage=input$coverage1,Number_iteration=input$niters1,Length_burnin=input$nburnin1,
+                      mean=mean(bayesres),sd=sd(bayesres),median=median(bayesres),
+                      a=outrega,
+                      b=outregb,
+                      rsq=n_rsq,
+                      vyp=outhetp)
+         
+         
+         #######
+       
+         
+         updateTabsetPanel(session = session, inputId = "results",selected = "Fit")
+         #waiter_hide()
+         
+         
+         return(list(mcmcout=bayesres,bind1=bind1,rsq=n_rsq, rac=lrac,wac=lwac,outa=outrega,linea=lineout$mean$a,lineb=lineout$mean$b,outb=outregb,cl=cl,cu=cu,hetp=outhetp))
+       
+       }
+       ###choice=RF
+     }else{
       ###N=1
-      if(N_tables==1){
+       if(N_tables==1){
+         
+         caldata<-reactive({
+           
+           if (is.null(input$calfile1))
+             return()
+           else
+           {
+             csv=list()
+             csv=read.csv(input$calfile1$datapath[1])
+             return(csv)   
+           }
+           
+         })
+         
+         ####merge sample data talbes
+         
+         sampledata<-reactive({
+           
+           if (is.null(input$samplefile1))
+             return()
+           else
+           {
+             
+             csv=list()
+             csv=read.csv(input$samplefile1$datapath[1])
+             return(csv)
+           }
+           
+         })
+         
+         
+         wadm<<-reactive(
+           return(append(as.numeric(unlist(strsplit(gsub("\\s", "", input$wadm1),","))),1))
+           
+         )
+         
+         uwad<<-reactive(
+           return(append(as.numeric(unlist(strsplit(gsub("\\s", "", input$uwad1),","))),1))
+           
+         )
+         
+         ####
+         
+         
+         NWS <- reactive({
+           
+           inFile <- input$calfile1
+           if (is.null(input$calfile1)){
+             return(NULL)
+           }else{
+             
+             tmp<- read.csv(inFile$datapath[1])
+             
+             return(max(tmp$wsol))# #working solutions from  calibrationtable
+             
+             
+           }
+         })
+         
+         standard1<-reactive(
+           input$standard1
+         )
+         umids<-reactive({
+           
+           if(standard1()==1){
+           return(c(rep(input$u_mid1,nfile)))
+           }else{
+             return(c(rep(1,nfile)))
+           }
+         })
+         
+         umads<-reactive(
+           
+           return(c(rep(input$u_mad1,nfile)))
+           
+         )
+         
+         
+         ####
+         
+         NS<-reactive({
+           
+           if (is.null(input$calfile1))
+             return()
+           else
+           {
+             NS<-nrow(input$calfile1)
+             return(NS)
+             
+           }
+           
+         })
+         
+         
+         
+         NT<-reactive(
+           
+           return(N*NR)
+           
+         )
+         
+         
+         
+         
+         #####
         
-        caldata<-reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            csv=list()
-            
-            
-            if(stringr::str_ends(input$calfile1$datapath[1], "csv")) {
-              csv=read.csv(input$calfile1$datapath[1])
-              
-            }
-            else if(stringr::str_ends(input$calfile1$datapath[1], "xlsx")) {
-              csv=read.xlsx(input$calfile1$datapath[1],1)
-            }
-            #csv=read.csv(input$calfile1$datapath[1])
-            return(csv)   
-          }
-          
-        })
-        
-        ####merge sample data talbes
-        
-        sampledata<-reactive({
-          
-          if (is.null(input$samplefile1))
-            return()
-          else
-          {
-            
-            csv=list()
-            
-            if(stringr::str_ends(input$samplefile1$datapath[1], "csv")) {
-              csv=read.csv(input$samplefile1$datapath[1])
-              
-            }
-            else if(stringr::str_ends(input$samplefile1$datapath[1], "xlsx")) {
-              csv=read.xlsx(input$samplefile1$datapath[1],1)
-            }
-            #csv=read.csv(input$samplefile1$datapath[1])
-            return(csv)
-          }
-          
-        })
-        
-        
-        wadm<<-reactive(
-          return(append(as.numeric(unlist(strsplit(gsub("\\s", "", input$wadm1),","))),1))
-          
-        )
-        
-        uwad<<-reactive(
-          return(append(as.numeric(unlist(strsplit(gsub("\\s", "", input$uwad1),","))),1))
-          
-        )
-        
-        ####
-        
-        
-        NWS <- reactive({
-          
-          inFile <- input$calfile1
-          if (is.null(input$calfile1)){
-            return(NULL)
+         midsm<-reactive(
+           if(standard1()==1){
+           caldata()$mid
           }else{
-            
-            if(stringr::str_ends(inFile$datapath[1], "csv")) {
-              tmp<- read.csv(inFile$datapath[1])
-              
-            }
-            else if(stringr::str_ends(inFile$datapath[1], "xlsx")) {
-              tmp<- read.xlsx(inFile$datapath[1],1)
-            }
-            # tmp<- read.csv(inFile$datapath[1])
-            
-            return(max(tmp$wsol))# #working solutions from  calibrationtable
-            
-            
-          }
-        })
-        
-        standard1<-reactive(
-          input$standard1
-        )
-        
-        
-        umids<-reactive({
-          
-          if(standard1()==1){
-            return(c(rep(input$u_mid1,nfile)))
-          }else{
-            return(c(rep(0.000015,nfile)))
-          }
-        })
-        
-        
-        umads<-reactive({
-          
-          if(standard1()==1){
-            return(c(rep(input$u_mad1,nfile)))
-          }else{
-            return(c(rep(0.000015,nfile)))
-            
-          }
-          
-        })
-        
-        
-        ####
-        
-        NS<-reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            NS<-nrow(input$calfile1)
-            return(NS)
-            
-          }
-          
-        })
-        
-        
-        
-        NT<-reactive(
-          
-          return(N*NR)
-          
-        )
-        
-        
-        
-        
-        #####
-        
-        
-        midsm<-reactive(
-          if (standard1()==1){
-            return(c(rep(caldata()$mid,NR)))
-          }else{
-            
-            return(c(rep(caldata()$mad/caldata()$mad,NR)))
-            
-          }
-        )
-        
-        madsm<-reactive(
-          
-          if (standard1()==1){
-            caldata()$mad
-          }else{
-            return(c(rep(caldata()$mad,NR)))
-          }
-        )
-        
-        wsol<-reactive(
-          if (standard1()==1){
-            caldata()$wsol
-          }else {
-            return(c(rep(caldata()$wsol,NR)))
-          }
-        )
-        
-        rac<- reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            
-            csv=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$calfile1$datapath[i])
-                
-              }
-              else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$calfile1$datapath[i],1)
-              }
-              #csv[[i]]=read.csv(input$calfile1$datapath[i])
-              csv[[i]][1:3]<-NULL
-            }
-            
-            return(unlist(csv)) # rbind the csv
-          }
-          
-        })
-        
-        
-        ras<- reactive({
-          
-          if (is.null(input$samplefile1))
-            return()
-          else
-          {
-            nfile<-nrow(input$samplefile1)
-            
-            csv=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              
-              if(stringr::str_ends(input$samplefile1$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$samplefile1$datapath[i])
-                
-              }
-              else if(stringr::str_ends(input$samplefile1$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$samplefile1$datapath[i],1)
-              }
-              
-              # csv[[i]]=read.csv(input$samplefile1$datapath[i])
-              csv[[i]][1:2]<-NULL
-            }
-            
-            return(unlist(csv)) # rbind the csv
-          }
-          
-        })
-        
-        mdi<-reactive(
-          
-          if (standard1()==1){
-            
-            return(sampledata()$mdi)
-            
-          }else {
-            return(c(rep(sampledata()$mdi,NR)))
-            
-          } 
-        )
-        
-        
-        midsi<-reactive(
-          if(standard1()==1){
-            sampledata()$mids
-          }else{
-            return(c(rep(sampledata()$mdi/sampledata()$mdi,NR)))
-          }
-        )
-        
-        MT<-reactive(
-          
-          return(M*MR)
-          
-        )
-        
-        
-        
-        sol<-reactive({
-          
-          if(standard1()==1){
-            return(rep(1:N,NR))
-          }else {
-            return(rep(1:(N*NR)))
-          }
-          
-        })
-        
-        sampl<-reactive({
-          
-          if(standard1()==1){
-            rep(1:M,NR)
-          }else {
-            return(rep(1:(M*NR)))
-          }
-        })      
-        
-        
-        NF<-reactive({
-          if(standard1()==1){
-            return(N)
-          }else {
-            return(N*NR)
-          }
-        })
-        
-        MF<-reactive({
-          if(standard1()==1){
-            return(M)
-          }else {
-            return(M*MR)
-          }
-        })
-        
-        
-        #####
-        
-        linedata = list(
-          midsm=midsm(),
-          madsm=madsm(),
-          wsol=wsol(),
-          rac=rac(),
-          midsi=midsi(),
-          mdi=mdi(),
-          ras=ras(),
-          umids=umids(),
-          umads=umads(),
-          wadm= wadm(),
-          uwad=uwad(),
-          NWS=NWS()+1,
-          N=NF(),
-          M=MF(),
-          MT=MT(),
-          NT=NT(),
-          sol=sol(),
-          NR=NR,
-          sampl=sampl()
-        )
-        
-        
-        # 
-        require(R2OpenBUGS)
-        ##################################################################
-        ##################################################################
-        ### Define the model
-        ##################################################################
-        ##################################################################
-        
-        
-        linemodel<-function(){#calculate known mass ratios wac for N calibrants.
-          
-          midsprec<-1/(umids*umids)
-          madsprec<-1/(umads*umads)
-          
-          for(i in 1:NWS){
-            wadprec[i]<-1/(uwad[i]*uwad[i])
-            wad[i]~dnorm(wadm[i],wadprec[i])
-          }
-          
-          for(i in 1:N){mids[i]~dnorm(midsm[i],midsprec)
-            mads[i]~dnorm(madsm[i],madsprec)
-          }
-          for(i in 1:N){wac[i]<-wad[wsol[i]]*mads[i]/mids[i]}  
-          
-          #######
-          #calibration equation
-          
-          
-          b~dnorm(0,1.0E-5)
-          
-          xins~dnorm(0,0.0016)%_%I(0.001,)
-          chsqns~dgamma(0.5,0.5)
-          fitprec<-xins/sqrt(chsqns)
-          
-          for(i in 1:N){mean[i]<-b*wac[i]
-          predm[i]~dnorm(mean[i],fitprec)}
-          for(i in 1:NT){rac[i]~dnorm(mean[sol[i]],fitprec)
-          }
-          
-          ###
-          # Compute the mass fraction wd
-          
-          b.cut<-cut(b)
-          sigras~dgamma(1.0E-5,1.0E-5)
-          wdsig~dgamma(1.0E-3,1.0E-3)
-          
-          wd~dnorm(0,1.0E-5)
-          for(i in 1:M){wdm[i]~dnorm(wd,wdsig)
-            rasmean[i]<-b.cut*wdm[i]*mdi[i]/midsi[i]
-            rasmeanp[i]~dnorm(rasmean[i],fitprec)}
-          for(i in 1:MT){ras[i]~dnorm(rasmeanp[sampl[i]],sigras)}
-        }
-        
-        ##################################################################
-        ##################################################################
-        ### Run OpenBUGS
-        ##################################################################
-        ##################################################################
-        
-        withProgress(message = 'Running Bayes', style="old",value = 0, {
-          
-          
-          
-          lineinits<-function(){list(sigras=1,wdsig=1,b=1)}
-          
-          lineout<-bugs(data=linedata,
-                        inits=lineinits,
-                        parameters=c("b","wd","wdm","wac","mean","predm"),   
-                        model.file=linemodel,
-                        n.iter = input$niters, n.burnin = input$nburnin, n.thin = 10,n.chains = 1)#,debug=T)    
-        })
-        
-        ######
-        attach.bugs(lineout) ## imports the random draws for the parameters
-        cl<-NULL
-        
-        for(i in 1:N){
-          for(j in 1:NR){cl<-c(cl,quantile(predm[,i], 0.025))}}
-        
-        cl<-rep(unique(cl), NR)
-        cu<-NULL
-        for(i in 1:N){
-          for(j in 1:NR){cu<-c(cu,quantile(predm[,i], 0.925))}}
-        cu<-rep(unique(cu), NR)
-        
-        
-        
-        
-        
-        
-        outregb<-data.frame(mean=lineout$mean$b,sd=lineout$sd$b)
-        outwdm<-data.frame(mean=lineout$mean$wdm,sd=lineout$sd$wdm)
-        outmean<-data.frame(mean=lineout$mean$mean)
-        outwd<-data.frame(mean=lineout$mean$wd,sd=lineout$sd$wd )
-        
-        
-        
-        
-        
-        ########## sets up the data to plot the regression line and calculate the rsq
-        
-        outwac=lineout$mean$wac
-        
-        if(standard1()==1){
-          lwac<-rep(outwac,NR)
-        }else {
-          lwac<-rep(outwac,1)
-        }
-        
-        ############ calculates the rsq
-        ybar<-outmean
-        sst<-sum((rac()-mean(rac()))^2)
-        sse<-sum((rac()-ybar)^2)
-        rsq<-1-sse/sst
-        
-        ###Regression output###
-        bayesres=lineout$sims.list$wd
-        ####dowload
-        
-        bind1 <-list(wadm=input$wadm1,uwad=input$uwad1,
-                     u_mid=umids(),u_mad=input$u_mad1,
-                     u_mids=input$u_mids1,u_mdi=input$u_mdi1,
-                     coverage=input$coverage1,Number_iteration=input$niters1,Length_burnin=input$nburnin1,
-                     mean=mean(bayesres),sd=sd(bayesres),median=median(bayesres),
-                     rfactor=outregb )
-        
-        ####
-        
-        
-        
-        updateTabsetPanel(session = session, inputId = "results",selected = "Fit")
-        
-        
-        return(list(mcmcout=bayesres,bind1=bind1,outb=outregb,rac=rac(),wac=lwac,lineb=lineout$mean$b,cl=cl,cu=cu))
-        
-        ####N>1
-      }else{
-        ####merge calibration data talbes
-        caldata<-reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            nfile<<-nrow(input$calfile1)
-            
-            csv=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$calfile1$datapath[i])
-                
-              }
-              else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$calfile1$datapath[i],1)
-              }
-              #csv[[i]]=read.csv(input$calfile1$datapath[i])
-              
-            }
-            
-            do.call(rbind,csv) # rbind the csv
-          }
-          
-        })
-        
-        ####merge sample data talbes
-        
-        sampledata<-reactive({
-          
-          if (is.null(input$samplefile1))
-            return()
-          else
-          {
-            nfile=nrow(input$samplefile1)
-            csv=list()
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$samplefile1$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$samplefile1$datapath[i])
-                
-              }
-              else if(stringr::str_ends(input$samplefile1$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$samplefile1$datapath[i],1)
-              }
-              # csv[[i]]=read.csv(input$samplefile1$datapath[i])
-              
-            }
-            
-            do.call(rbind,csv) # rbind the csv
-          }
-          
-        })
-        
-        
-        wadm<<-reactive(
-          return(append(as.numeric(unlist(strsplit(gsub("\\s", "", input$wadm1),","))),1))
-          
-        )
-        
-        uwad<<-reactive(
-          return(append(as.numeric(unlist(strsplit(gsub("\\s", "", input$uwad1),","))),1))
-          
-        )
-        
-        ####
-        
-        
-        NWS <- reactive({
-          
-          inFile <- input$calfile1
-          if (is.null(input$calfile1)){
-            return(NULL)
-          }else{
-            
-            if(stringr::str_ends(inFile$datapath[1], "csv")) {
-              tmp<- read.csv(inFile$datapath[1])
-              
-            }
-            else if(stringr::str_ends(inFile$datapath[1], "xlsx")) {
-              tmp<- read.xlsx(inFile$datapath[1],1)
-            }
-            
-            #tmp<- read.csv(inFile$datapath[1])
-            
-            return(max(tmp$wsol))# #working solutions from  calibrationtable
-            
-            
-          }
-        })
-        
-        standard1<-reactive(
-          input$standard1
-        )
-        umids<-reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            
-            if (standard1()==1){
-              nfile<<-nrow(input$calfile1)
-              
-              return(c(rep(input$u_mid1,nfile)))
-              
-            }else{
-              
-              nfile<<-nrow(input$calfile1)
-              return(c(rep(0.000015,nfile)))
-            }
-          }
-        })
-        
-        umads<-reactive({
-          
-          if(standard1()==1){
-            return(c(rep(input$u_mad,nfile)))
-          }else{
-            return(c(rep(0.000015,nfile)))
-            
-          }
-          
-        })
-        
-        
-        ####
-        
-        NS<-reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            NS<-nrow(input$calfile1)
-            return(NS)
-            
-          }
-          
-        })
-        
-        
-        
-        NT<-reactive(
-          
-          length(caldata()$mid)
-          
-        )
-        
-        expc<-reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            nfile<-nrow(input$calfile1)
-            
-            
-            expc=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-                nr= nrow(read.csv(input$calfile1$datapath[i]))
-                
-              }
-              else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                nr= nrow(read.xlsx(input$calfile1$datapath[i],1))
-              }
-              # nr= nrow(read.csv(input$calfile1$datapath[i]))
-              expc[[i]]<-(c(rep(1*i,each=nr)))
-              expc[[i]]<-t(expc[[i]])
-            } 
-            
-            
-            
-            as.vector(do.call(cbind, expc))
-            
-            
-          }
-          
-        })
-        
-        
-        
-        midsm<-reactive(
-          if(standard1()==1){
-            caldata()$mid
-            
-          }else{
-            
-            caldata()$mad/ caldata()$mad
-            
-          }
-        )
-        madsm<<-reactive(
-          caldata()$mad
-        )
-        
-        wsol<<-reactive(
-          caldata()$wsol
-        )
-        
-        
-        
-        NTT <- reactive({
-          
-          inFile <- input$calfile1
-          if (is.null(input$calfile1)){
-            return(NULL)
-          }else{
-            
-            
-            tmp=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-                tmp[[i]]=read.csv(input$calfile1$datapath[i])
-                
-              }
-              else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                tmp[[i]]=read.xlsx(input$calfile1$datapath[i],1)
-              }
-              #tmp[[i]]=read.csv(input$calfile1$datapath[i])
-              
-            }
-            
-            tmp<-do.call(rbind,tmp)
-            
-            NR<<-ncol(tmp)-3# number of replicates for each calibrant
-            NT<-nrow(tmp)
-            
-            NTT<-NR*NT
-            
-          }
-        })
-        
-        
-        expc1<-reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            nfile<-nrow(input$calfile1)
-            
-            
-            
-            expc1=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-                nr<<-nrow(read.csv(input$calfile1$datapath[i]))
-                nrac<-ncol(read.csv(input$calfile1$datapath[i]))-3
-                
-              }
-              else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                nr<<-nrow(read.xlsx(input$calfile1$datapath[i],1))
-                nrac<-ncol(read.xlsx(input$calfile1$datapath[i],1))-3
-              }
-              # nr<<-nrow(read.csv(input$calfile1$datapath[i]))
-              # nrac<-ncol(read.csv(input$calfile1$datapath[i]))-3
-              n1<-nr*nrac
-              expc1[[i]]<-matrix(c(rep(1*i,each=n1)))
-              
-            } 
-            
-            
-            as.vector(do.call(rbind, expc1))
-            
-            
-          }
-          
-        })
-        
-        expc2<-reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            nfile<-nrow(input$calfile1)
-            
-            csv=list()
-            
-            if(stringr::str_ends(input$calfile1$datapath[1], "csv")) {
-              k<-nrow(read.csv(input$calfile1$datapath[1]))
-              nrac<-ncol(read.csv(input$calfile1$datapath[1]))-3
-              
-            }
-            else if(stringr::str_ends(input$calfile1$datapath[1], "xlsx")) {
-              k<-nrow(read.xlsx(input$calfile1$datapath[1],1))
-              nrac<-ncol(read.xlsx(input$calfile1$datapath[1],1))-3
-            }
-            
-            # k<-nrow(read.csv(input$calfile1$datapath[1]))
-            # nrac<-ncol(read.csv(input$calfile1$datapath[1]))-3
-            
-            
-            csv[[1]]=c(rep(1:k,nrac))
-            
-            
-            for(i in 2: nfile)
-            {
-              
-              c=max(csv[[i-1]])+1
-              
-              if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-                x=nrow(read.csv(input$calfile1$datapath[i]))
-                
-                
-              }
-              else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                x=nrow(read.xlsx(input$calfile1$datapath[i],1))
-                
-              }
-              
-              #x=nrow(read.csv(input$calfile1$datapath[i]))
-              y=c+x-1
-              csv[[i]]=c(rep(c:y, nrac))
-              
-            }
-            
-            as.vector(unlist(csv))
-            
-            
-            
-          }
-          
-        })
-        
-        
-        
-        
-        rac<- reactive({
-          
-          if (is.null(input$calfile1))
-            return()
-          else
-          {
-            nfile<-nrow(input$calfile1)
-            
-            csv=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$calfile1$datapath[i])
-                
-                
-              }
-              else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$calfile1$datapath[i],1)
-                
-              }
-              # csv[[i]]=read.csv(input$calfile1$datapath[i])
-              csv[[i]][1:3]<-NULL
-            }
-            
-            return(unlist(csv)) # rbind the csv
-          }
-          
-        })
-        
-        
-        ras<- reactive({
-          
-          if (is.null(input$samplefile1))
-            return()
-          else
-          {
-            nfile<-nrow(input$samplefile1)
-            
-            csv=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$samplefile1$datapath[i], "csv")) {
-                csv[[i]]=read.csv(input$samplefile1$datapath[i])
-                
-                
-              }
-              else if(stringr::str_ends(input$samplefile1$datapath[i], "xlsx")) {
-                csv[[i]]=read.xlsx(input$samplefile1$datapath[i],1)
-                
-              }
-              #csv[[i]]=read.csv(input$samplefile1$datapath[i])
-              csv[[i]][1:2]<-NULL
-            }
-            
-            return(unlist(csv)) # rbind the csv
-          }
-          
-        })
-        
-        
-        md<<-reactive(
-          
-          mdi<-sampledata()$mdi
-          
-        )
-        
-        
-        
-        midsi<<-reactive(
-          if(standard1()==1){
-            sampledata()$mids
-          }else{
-            
-            sampledata()$mdi/sampledata()$mdi
-          } 
-          
-        )
-        
-        MT<<-reactive(
-          
-          length(sampledata()$mids)
-          
-        )
-        
-        MTT <- reactive({
-          
-          inFile <- input$samplefile1
-          if (is.null(input$samplefile1)){
-            return(NULL)
-          }else{
-            
-            
-            tmp=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$samplefile1$datapath[i], "csv")) {
-                tmp[[i]]=read.csv(input$samplefile1$datapath[i])
-                
-                
-              }
-              else if(stringr::str_ends(input$samplefile1$datapath[i], "xlsx")) {
-                tmp[[i]]=read.xlsx(input$samplefile1$datapath[i],1)
-                
-              }
-              #tmp[[i]]=read.csv(input$samplefile1$datapath[i])
-              
-            }
-            
-            tmp<-do.call(rbind,tmp)
-            
-            NR<<-ncol(tmp)-2# number of replicates for each calibrant
-            NT<-nrow(tmp)
-            
-            NTT<-NR*NT
-            
-          }
-        })
-        
-        exp<-reactive({
-          
-          if (is.null(input$samplefile1))
-            return()
-          else
-          {
-            nfile<-nrow(input$samplefile1)
-            
-            
-            exp=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$samplefile1$datapath[i], "csv")) {
-                nr= nrow(read.csv(input$samplefile1$datapath[i]))
-                
-                
-              }
-              else if(stringr::str_ends(input$samplefile1$datapath[i], "xlsx")) {
-                nr= nrow(read.xlsx(input$samplefile1$datapath[i],1))
-                
-              }
-              #nr= nrow(read.csv(input$samplefile1$datapath[i]))
-              exp[[i]]<-(c(rep(1*i,each=nr)))
-              exp[[i]]<-t(exp[[i]])
-            } 
-            
-            as.vector(do.call(cbind, exp))
-            
-          }
-          
-        })
-        
-        
-        expr<-reactive({
-          
-          if (is.null(input$samplefile1))
-            return()
-          else
-          {
-            nfile<<-nrow(input$samplefile1)
-            
-            
-            
-            expr=list()
-            
-            for(i in 1: nfile)
-            {
-              
-              if(stringr::str_ends(input$samplefile1$datapath[i], "csv")) {
-                nr<<-nrow(read.csv(input$samplefile1$datapath[i]))
-                nrac<-ncol(read.csv(input$samplefile1$datapath[i],1))-2
-              }
-              
-              else if(stringr::str_ends(input$samplefile1$datapath[i], "xlsx")) {
-                nr<<-nrow(read.xlsx(input$samplefile1$datapath[i],1))
-                nrac<-ncol(read.xlsx(input$samplefile1$datapath[i],1))-2
-              }
-              
-              #  nr<<-nrow(read.csv(input$samplefile1$datapath[i]))
-              # nrac<-ncol(read.csv(input$samplefile1$datapath[i]))-2
-              n1<-nr*nrac
-              expr[[i]]<-matrix(c(rep(1*i,each=n1)))
-              
-            } 
-            
-            
-            as.vector(do.call(rbind, expr))
-            
-            
-          }
-          
-        })
-        
-        expr2<-reactive({
-          
-          if (is.null(input$samplefile1))
-            return()
-          else
-          {
-            nfile<-nrow(input$samplefile1)
-            
-            csv=list()
-            
-            if(stringr::str_ends(input$samplefile1$datapath[1], "csv")) {
-              k<-nrow(read.csv(input$samplefile1$datapath[1]))
-              nras<-ncol(read.csv(input$samplefile1$datapath[1]))-2
-            }
-            
-            else if(stringr::str_ends(input$samplefile1$datapath[1], "xlsx")) {
-              k<-nrow(read.xlsx(input$samplefile1$datapath[1],1))
-              nras<-ncol(read.xlsx(input$samplefile1$datapath[1],1))-2
-            }
-            #k<-nrow(read.csv(input$samplefile1$datapath[1]))
-            # nras<-ncol(read.csv(input$samplefile1$datapath[1]))-2
-            
-            
-            csv[[1]]=c(rep(1:k,nras))
-            
-            
-            for(i in 2: nfile)
-            {
-              
-              c=max(csv[[i-1]])+1
-              
-              if(stringr::str_ends(input$samplefile1$datapath[i], "csv")) {
-                x=nrow(read.csv(input$samplefile1$datapath[i]))
-              }
-              
-              else if(stringr::str_ends(input$samplefile1$datapath[i], "xlsx")) {
-                x=nrow(read.xlsx(input$samplefile1$datapath[i],1))
-              }
-              
-              #x=nrow(read.csv(input$samplefile1$datapath[i]))
-              y=c+x-1
-              csv[[i]]=c(rep(c:y, nras))
-              
-            }
-            
-            as.vector(unlist(csv))
-            
-            
-            
-          }
-          
-        })
-        
-        nfile<-reactive({
-          
-          if (!is.null(input$calfile1))
-          {
-            nfile<-nrow(input$calfile1)
-          }
-        })
-        
-        nrac<-reactive({
-          
-          if (!is.null(input$calfile1))
-          {
-            
-            if(stringr::str_ends(input$samplefile1$datapath[1], "csv")) {
-              nrac<-ncol(read.csv(input$calfile1$datapath[1]))-3
-            }
-            
-            else if(stringr::str_ends(input$calfile1$datapath[1], "xlsx")) {
-              nrac<-ncol(read.xlsx(input$calfile1$datapath[1],1))-3
-            }
-            # nrac<-ncol(read.csv(input$calfile1$datapath[1]))-3
-            
-          }
-        })
-        
-        vecwac <- reactive({
-          
-          if (!is.null(input$calfile1))
-          {
-            
-            vec=list()
-            for(i in 1: nfile){
-              
-              if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-                vec[[i]]<-nrow(read.csv(input$calfile1$datapath[i]))
-              }
-              
-              else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                vec[[i]]<-nrow(read.xlsx(input$calfile1$datapath[i],1))
-              }
-              
-              #vec[[i]]<-nrow(read.csv(input$calfile1$datapath[i]))
-            }
-            return(vec)
-          }
-        })
-        
-        vecrac <- reactive({
-          
-          if (!is.null(input$calfile1))
-          {
-            
-            vecrac=list()
-            for(i in 1: nfile){
-              
-              if(stringr::str_ends(input$calfile1$datapath[i], "csv")) {
-                vecrac[[i]]<-nrac()*nrow(read.csv(input$calfile1$datapath[i]))
-              }
-              
-              else if(stringr::str_ends(input$calfile1$datapath[i], "xlsx")) {
-                vecrac[[i]]<-nrac()*nrow(read.xlsx(input$calfile1$datapath[i],1))
-              }
-              # vecrac[[i]]<-nrac()*nrow(read.csv(input$calfile1$datapath[i]))
-            }
-            return(vecrac)
-          }
-        })
-        
-        vecras <- reactive({
-          
-          if (!is.null(input$samplefile1))
-          {
-            
-            vecras=list()
-            for(i in 1: nfile){
-              
-              if(stringr::str_ends(input$samplefile1$datapath[i], "csv")) {
-                vecras[[i]]<-nrac()*nrow(read.csv(input$samplefile1$datapath[i]))
-              }
-              
-              else if(stringr::str_ends(input$samplefile1$datapath[i], "xlsx")) {
-                vecras[[i]]<-nrac()*nrow(read.xlsx(input$samplefile1$datapath[i],1))
-              }
-              
-              # vecras[[i]]<-nrac()*nrow(read.csv(input$samplefile1$datapath[i]))
-            }
-            return(vecras)
-          }
-        })
-        
-        linedata<-list(umids=umids(),
-                       umads=umads(),
-                       wadm=wadm(),
-                       uwad=uwad(),
-                       NWS=NWS()+1,
-                       NS=NS(),
-                       NT=NT(),
-                       expc=expc(),
-                       midsm=midsm(),
-                       madsm=madsm(),
-                       wsol=wsol(), 
-                       NTT=NTT(), 
-                       expc1=expc1(),
-                       expc2=expc2(),
-                       rac=rac(),
-                       ras=ras(),
-                       MT=MT(),MTT=MTT(),
-                       exp=exp(),
-                       midsi=midsi(),
-                       md=md(),
-                       expr=expr(),
-                       expr2=expr2())
-        
-        
-        require(R2OpenBUGS)
-        # #   
-        # #   ##################################################################
-        # #   ##################################################################
-        # #   ### Define the model
-        # #   ##################################################################
-        # #   ##################################################################
-        # #   
-        # #   
-        linemodel<-function(){####this program uses NS number of input tables. 
-          ### NT is the total number of elements of midsm and madsm (total number of calibrants). 
-          ### expc gives the experiment designation for each element in midsm and madsm. NTT is the total number of measurements in the calibration experiment.
-          ### expc1 gives the experiment label for each observation in rac, expc2 gives calibrant designation for each rac.
-          ### MT gives the total number of samples, MTT gives the total number of observations in the quantitation experiment 
-          ### exp gives the experiment designation for each sample, expr gives the experiment designation for each element in ras, 
-          ### expr2 gives the sample designation for each element in ras.
-          
-          
-          for(i in 1:NWS){wadprec[i]<-1/(uwad[i]*uwad[i])
-          wad[i]~dnorm(wadm[i],wadprec[i])}
-          wadmean<-mean(wad[])
-          
-          for(i in 1:NS){midsprec[i]<-1/(umids[i]*umids[i])
-          madsprec[i]<-1/(umads[i]*umads[i])}
-          
-          
-          for(i in 1:NT){
-            mids[i]~dnorm(midsm[i],midsprec[expc[i]])
-            mads[i]~dnorm(madsm[i],madsprec[expc[i]])
-            ratio[i]<-mads[i]/mids[i] 
-            wac[i]<-wad[wsol[i]]* ratio[i] } 
-          
-          #######
-          #calibration equation
-          for(i in 1:NS){
-            
-            b[i]~dnorm(0,1.0E-5)
-            
-            xins[i]~dnorm(0,0.0016)%_%I(0.001,)
-            chsqns[i]~dgamma(0.5,0.5)
-            fitprec[i]<-xins[i]/sqrt(chsqns[i])
-            
-          }
-          
-          for(i in 1:NTT){mean[i]<-b[expc1[i]]*wac[expc2[i]]
-          rac[i]~dnorm(mean[i],fitprec[expc1[i]])
-          predm[i]~dnorm(mean[i],fitprec[expc1[i]])
-          
-          }
-          
-          
-          ###
-          # Compute the mass fraction wd
-          for(i in 1:NS){
-            
-            b.cut[i]<-cut(b[i])
-            xinsi[i]~dnorm(0,0.0016)%_%I(0.001,)
-            chsqnsi[i]~dgamma(0.5,0.5)
-            sigras[i]<-xinsi[i]/sqrt(chsqnsi[i])
-            
-            xinsw[i]~dnorm(0,0.0016)%_%I(0.001,)
-            chsqnsw[i]~dgamma(0.5,0.5)
-            wdsig[i]<-xinsw[i]/sqrt(chsqnsw[i])
-            wd[i]~dnorm(0,1.0E-5)}
-          
-          for(i in 1:MT){
-            wdm[i]~dnorm(wd[exp[i]],wdsig[exp[i]])
-            rasmean[i]<-b.cut[exp[i]]*wdm[i]*md[i]/midsi[i]
-            rasmeanp[i]~dnorm(rasmean[i],fitprec[exp[i]])}
-          
-          
-          
-          for(i in 1:MTT){
-            ras[i]~dnorm(rasmeanp[expr2[i]],sigras[expr[i]])
-            
-          } 
-          
-          # 
-          
-          #############################################
-          T~dcat(P[])
-          P[1:NS]~ddirich(alpha[])
-          for(i in 1:NS){alpha[i]<-1}
-          mumeanfin<-wd[T]
-          
-        }
-        
-        ##################################################################
-        ##################################################################
-        ### Run OpenBUGS
-        ##################################################################
-        ##################################################################
-        
-        withProgress(message = 'Running Bayes', style="old",value = 0, {
-          
-          lineinits<-function(){list(b=c(1,1),wd=c(0,0))}
-          
-          lineout<-bugs(data=linedata,
-                        inits=lineinits,
-                        parameters=c("wd","wdm","mumeanfin","wac","b","mean","predm"),   
-                        model.file=linemodel,
-                        n.iter = 10000, n.burnin = 5000, n.thin = 10,n.chains =1)#,debug=T)
-        })
-        
-        ###########################################
-        ### additional result generation
-        
-        attach.bugs(lineout) ## imports the random draws for the parameters
-        
-        
-        outregb<-data.frame(mean=lineout$mean$b,sd=lineout$sd$b)
-        outwdm<-data.frame(mean=lineout$mean$wdm,sd=lineout$sd$wdm)
-        outmean<-data.frame(mean=lineout$mean$mean)
-        outwd<-data.frame(mean=lineout$mean$wd,sd=lineout$sd$wd )
-        outmumeanfin<-data.frame(mean=lineout$mean$mumeanfin,sd=lineout$sd$mumeanfin )
-        
-        ########## sets up the data to plot the regression line and calculate the rsq
-        
-        require(data.table)
-        
-        
-        ############ calculates the rsq
-        
-        ybar<-split(outmean,rep(1:nfile,vecrac()))
-        rac_rsq<-split(rac(),rep(1:nfile,vecrac()))
-        
-        sst=list()
-        sse=list()
-        rsq=list()
-        for(i in 1: nfile)
-        {
-          sst[[i]]<-sum((rac_rsq[[i]]-mean(rac_rsq[[i]]))^2)
-          sse[[i]]<-sum((rac_rsq[[i]]-ybar[[i]])^2)
-          rsq[[i]]<-1-(sse[[i]]/sst[[i]])
-        }
-        
-        n_rsq<-unlist(rsq)
-        
-        
-        ####calibration plot ##
-        
-        ##get wac vectors
-        
-        outwac=lineout$mean$wac
-        
-        lwac<-split(outwac,rep(1:nfile,vecwac()))
-        
-        lwac<-lapply(lwac,rep,nrac())
-        
-        
-        lrac<-split(rac(),rep(1:nfile,vecrac()))
-        
-        cl=NULL
-        
-        length=length(lineout$mean$predm)
-        predm=lineout$sims.list$predm
-        for(i in 1:length){
-          cl[[i]]<-quantile(predm[,i],0.025)
-        }
-        
-        cl<-split(cl,rep(1:nfile,vecrac()))
-        
-        cu=NULL
-        for(i in 1:length){
-          cu[[i]]<-quantile(predm[,i],0.9995)
-        }
-        
-        cu<-split(cu,rep(1:nfile,vecrac()))
-        
-        
-        ###Regression output###
-        
-        
-        bayesres=lineout$sims.list$mumeanfin
-        
-        ##### download
-        bind1 <-list(wadm=input$wadm1,uwad=input$uwad1,
-                     u_mid=umids(),u_mad=input$u_mad1,
-                     u_mids=input$u_mids1,u_mdi=input$u_mdi1,
-                     coverage=input$coverage1,Number_iteration=input$niters1,Length_burnin=input$nburnin1,
-                     mean=mean(bayesres),sd=sd(bayesres),median=median(bayesres),
-                     rfactor=outregb )
-        
-        updateTabsetPanel(session = session, inputId = "results",selected = "Fit")
-        #waiter_hide()
-        
-        
-        return(list(mcmcout=bayesres,bind1=bind1,rsq=n_rsq, rac=lrac,wac=lwac,lineb=lineout$mean$b,outb=outregb,cl=cl,cu=cu))
-        
-        
-      }
-      
-      
-    }
-    # waiter_show(
-    #   spin_circle(),
-    #   color = "#87A96B",
-    #   "Just a moment ..."
-    #   
-    # )
+           
+             caldata()$mad/caldata()$mad
+        
+         }
+         ) 
+           
+         madsm<-reactive(
+           caldata()$mad
+         )
+         
+         wsol<-reactive(
+           caldata()$wsol
+         )
+         
+         
+         rac<- reactive({
+           
+           if (is.null(input$calfile1))
+             return()
+           else
+           {
+             
+             csv=list()
+             
+             for(i in 1: nfile)
+             {
+               csv[[i]]=read.csv(input$calfile1$datapath[i])
+               csv[[i]][1:3]<-NULL
+             }
+             
+             return(unlist(csv)) # rbind the csv
+           }
+           
+         })
+         
+         
+         ras<- reactive({
+           
+           if (is.null(input$samplefile1))
+             return()
+           else
+           {
+             nfile<-nrow(input$samplefile1)
+             
+             csv=list()
+             
+             for(i in 1: nfile)
+             {
+               csv[[i]]=read.csv(input$samplefile1$datapath[i])
+               csv[[i]][1:2]<-NULL
+             }
+             
+             return(unlist(csv)) # rbind the csv
+           }
+           
+         })
+         
+         
+         mdi<-reactive(
+           
+           sampledata()$mdi
+           
+         )
+         
+         
+         midsi<-reactive(
+           if(standard1()==1){
+           sampledata()$mids
+           
+         }else{
+           
+             sampledata()$mdi/sampledata()$mdi
+         }
+         )
+         
+         MT<-reactive(
+           
+           return(M*MR)
+           
+         )
+         
+         
+         
+         sol<-reactive({
+           rep(1:N,NR)
+         })
+         
+         sampl<-reactive({
+           rep(1:M,NR)
+           
+         })   
+         
+         
+         #####
+         
+         linedata = list(
+           midsm=midsm(),
+           madsm=madsm(),
+           wsol=wsol(),
+           rac=rac(),
+           midsi=midsi(),
+           mdi=mdi(),
+           ras=ras(),
+           umids=umids(),
+           umads=umads(),
+           wadm= wadm(),
+           uwad=uwad(),
+           NWS=NWS()+1,
+           N=N,
+           M=M,
+           MT=MT(),
+           NT=NT(),
+           sol=sol(),
+           NR=NR,
+           sampl=sampl()
+         )
+         
+         
+         # 
+         require(R2OpenBUGS)
+         ##################################################################
+         ##################################################################
+         ### Define the model
+         ##################################################################
+         ##################################################################
+         
+         
+         linemodel<-function(){#calculate known mass ratios wac for N calibrants.
+           
+           midsprec<-1/(umids*umids)
+           madsprec<-1/(umads*umads)
+           
+           for(i in 1:NWS){
+             wadprec[i]<-1/(uwad[i]*uwad[i])
+             wad[i]~dnorm(wadm[i],wadprec[i])
+           }
+           
+           for(i in 1:N){mids[i]~dnorm(midsm[i],midsprec)
+             mads[i]~dnorm(madsm[i],madsprec)
+           }
+           for(i in 1:N){wac[i]<-wad[wsol[i]]*mads[i]/mids[i]}  
+           
+           #######
+           #calibration equation
+           
+           
+           b~dnorm(0,1.0E-5)
+           
+           xins~dnorm(0,0.0016)%_%I(0.001,)
+           chsqns~dgamma(0.5,0.5)
+           fitprec<-xins/sqrt(chsqns)
+           
+           for(i in 1:N){mean[i]<-b*wac[i]
+           predm[i]~dnorm(mean[i],fitprec)}
+           for(i in 1:NT){rac[i]~dnorm(mean[sol[i]],fitprec)
+           }
+           
+           ###
+           # Compute the mass fraction wd
+           
+           b.cut<-cut(b)
+           sigras~dgamma(1.0E-5,1.0E-5)
+           wdsig~dgamma(1.0E-3,1.0E-3)
+           
+           wd~dnorm(0,1.0E-5)
+           for(i in 1:M){wdm[i]~dnorm(wd,wdsig)
+             rasmean[i]<-b.cut*wdm[i]*mdi[i]/midsi[i]
+             rasmeanp[i]~dnorm(rasmean[i],fitprec)}
+           for(i in 1:MT){ras[i]~dnorm(rasmeanp[sampl[i]],sigras)}
+         }
+         
+         ##################################################################
+         ##################################################################
+         ### Run OpenBUGS
+         ##################################################################
+         ##################################################################
+         
+         withProgress(message = 'Running Bayes', style="old",value = 0, {
+           
+           
+           
+           lineinits<-function(){list(sigras=1,wdsig=1,b=1)}
+           
+           lineout<-bugs(data=linedata,
+                         inits=lineinits,
+                         parameters=c("b","wd","wdm","wac","mean","predm"),   
+                         model.file=linemodel,
+                         n.iter = input$niters, n.burnin = input$nburnin, n.thin = 10,n.chains = 1)#,debug=T)    
+         })
+         
+         ######
+         attach.bugs(lineout) ## imports the random draws for the parameters
+         cl<-NULL
+         
+         for(i in 1:N){
+           for(j in 1:NR){cl<-c(cl,quantile(predm[,i], 0.025))}}
+         
+         cl<-rep(unique(cl), NR)
+         cu<-NULL
+         for(i in 1:N){
+           for(j in 1:NR){cu<-c(cu,quantile(predm[,i], 0.925))}}
+         cu<-rep(unique(cu), NR)
+         
+         
+         
+         
+         
+         
+         outregb<-data.frame(mean=lineout$mean$b,sd=lineout$sd$b)
+         outwdm<-data.frame(mean=lineout$mean$wdm,sd=lineout$sd$wdm)
+         outmean<-data.frame(mean=lineout$mean$mean)
+         outwd<-data.frame(mean=lineout$mean$wd,sd=lineout$sd$wd )
+         
+         
+         
+         
+         
+         ########## sets up the data to plot the regression line and calculate the rsq
+         
+         outwac=lineout$mean$wac
+         
+         lwac<-rep(outwac,NR)
+         
+         ############ calculates the rsq
+         ybar<-outmean
+         sst<-sum((rac()-mean(rac()))^2)
+         sse<-sum((rac()-ybar)^2)
+         rsq<-1-sse/sst
+         
+         ###Regression output###
+         bayesres=lineout$sims.list$wd
+         ####dowload
+         
+         bind1 <-list(wadm=input$wadm1,uwad=input$uwad1,
+                      u_mid=umids(),u_mad=input$u_mad1,
+                      u_mids=input$u_mids1,u_mdi=input$u_mdi1,
+                      coverage=input$coverage1,Number_iteration=input$niters1,Length_burnin=input$nburnin1,
+                      mean=mean(bayesres),sd=sd(bayesres),median=median(bayesres),
+                      rfactor=outregb )
+         
+         ####
+         
+        
+         
+         updateTabsetPanel(session = session, inputId = "results",selected = "Fit")
+         
+         
+         return(list(mcmcout=bayesres,bind1=bind1,outb=outregb,rac=rac(),wac=lwac,lineb=lineout$mean$b,cl=cl,cu=cu))
+       
+         ####N>1
+         }else{
+           ####merge calibration data talbes
+           caldata<-reactive({
+             
+             if (is.null(input$calfile1))
+               return()
+             else
+             {
+               nfile<<-nrow(input$calfile1)
+               
+               csv=list()
+               
+               for(i in 1: nfile)
+               {
+                 csv[[i]]=read.csv(input$calfile1$datapath[i])
+                 
+               }
+               
+               do.call(rbind,csv) # rbind the csv
+             }
+             
+           })
+           
+           ####merge sample data talbes
+           
+           sampledata<-reactive({
+             
+             if (is.null(input$samplefile1))
+               return()
+             else
+             {
+               nfile=nrow(input$samplefile1)
+               csv=list()
+               for(i in 1: nfile)
+               {
+                 csv[[i]]=read.csv(input$samplefile1$datapath[i])
+                 
+               }
+               
+               do.call(rbind,csv) # rbind the csv
+             }
+             
+           })
+           
+           
+           wadm<<-reactive(
+             return(append(as.numeric(unlist(strsplit(gsub("\\s", "", input$wadm1),","))),1))
+             
+           )
+           
+           uwad<<-reactive(
+             return(append(as.numeric(unlist(strsplit(gsub("\\s", "", input$uwad1),","))),1))
+             
+           )
+           
+           ####
+           
+           
+           NWS <- reactive({
+             
+             inFile <- input$calfile1
+             if (is.null(input$calfile1)){
+               return(NULL)
+             }else{
+               
+               if(stringr::str_ends(input$calfile1$datapath[1], "csv")) {
+                 tmp=read.csv(input$calfile1$datapath[1])
+                 
+               }
+               else if(stringr::str_ends(input$calfile1$datapath[1], "xlsx")) {
+                 tmp=read.xlsx(input$calfile1$datapath[1],1)
+               }
+               #tmp<- read.csv(inFile$datapath[1])
+               
+               return(max(tmp$wsol))# #working solutions from  calibrationtable
+               
+               
+             }
+           })
+           
+           
+           
+           standard1<-reactive(
+             input$standard1
+           )
+           umids<-reactive({
+
+             if (is.null(input$calfile1))
+               return()
+             else
+             {
+
+               if (standard1()==1){
+               nfile<<-nrow(input$calfile1)
+               
+               return(c(rep(input$u_mid1,nfile)))
+               
+               }else{
+                 
+                 nfile<<-nrow(input$calfile1)
+                 return(c(rep(1,nfile)))
+               }
+             }
+           })
+           
+           umads<-reactive(
+             if (!is.null(input$calfile1)){
+               nfile<-nrow(input$calfile1)
+             return(c(rep(input$u_mad1,nfile)))
+             }
+           )
+           
+           
+           ####
+           
+           NS<-reactive({
+             
+             if (is.null(input$calfile1))
+               return()
+             else
+             {
+               NS<-nrow(input$calfile1)
+               return(NS)
+               
+             }
+             
+           })
+           
+           
+           
+           NT<-reactive(
+             
+             length(caldata()$mid)
+             
+           )
+           
+           expc<-reactive({
+             
+             if (is.null(input$calfile1))
+               return()
+             else
+             {
+               nfile<-nrow(input$calfile1)
+               
+               
+               expc=list()
+               
+               for(i in 1: nfile)
+               {
+                 nr= nrow(read.csv(input$calfile1$datapath[i]))
+                 expc[[i]]<-(c(rep(1*i,each=nr)))
+                 expc[[i]]<-t(expc[[i]])
+               } 
+               
+               
+               
+               as.vector(do.call(cbind, expc))
+               
+               
+             }
+             
+           })
+           
+           
+           
+           midsm<-reactive(
+             if(standard1()==1){
+             caldata()$mid
+           
+           }else{
+            
+               caldata()$mad/ caldata()$mad
+             
+           }
+           )
+           madsm<<-reactive(
+             caldata()$mad
+           )
+           
+           wsol<<-reactive(
+             caldata()$wsol
+           )
+           
+           
+           
+           NTT <- reactive({
+             
+             inFile <- input$calfile1
+             if (is.null(input$calfile1)){
+               return(NULL)
+             }else{
+               
+               
+               tmp=list()
+               
+               for(i in 1: nfile)
+               {
+                 tmp[[i]]=read.csv(input$calfile1$datapath[i])
+                 
+               }
+               
+               tmp<-do.call(rbind,tmp)
+               
+               NR<<-ncol(tmp)-3# number of replicates for each calibrant
+               NT<-nrow(tmp)
+               
+               NTT<-NR*NT
+               
+             }
+           })
+           
+           
+           expc1<-reactive({
+             
+             if (is.null(input$calfile1))
+               return()
+             else
+             {
+               nfile<-nrow(input$calfile1)
+               
+               
+               
+               expc1=list()
+               
+               for(i in 1: nfile)
+               {
+                 nr<<-nrow(read.csv(input$calfile1$datapath[i]))
+                 nrac<-ncol(read.csv(input$calfile1$datapath[i]))-3
+                 n1<-nr*nrac
+                 expc1[[i]]<-matrix(c(rep(1*i,each=n1)))
+                 
+               } 
+               
+               
+               as.vector(do.call(rbind, expc1))
+               
+               
+             }
+             
+           })
+           
+           expc2<-reactive({
+             
+             if (is.null(input$calfile1))
+               return()
+             else
+             {
+               nfile<-nrow(input$calfile1)
+               
+               csv=list()
+               
+               k<-nrow(read.csv(input$calfile1$datapath[1]))
+               nrac<-ncol(read.csv(input$calfile1$datapath[1]))-3
+               
+               
+               csv[[1]]=c(rep(1:k,nrac))
+               
+               
+               for(i in 2: nfile)
+               {
+                 
+                 c=max(csv[[i-1]])+1
+                 x=nrow(read.csv(input$calfile1$datapath[i]))
+                 y=c+x-1
+                 csv[[i]]=c(rep(c:y, nrac))
+                 
+               }
+               
+               as.vector(unlist(csv))
+               
+               
+               
+             }
+             
+           })
+           
+           
+           
+           
+           rac<- reactive({
+             
+             if (is.null(input$calfile1))
+               return()
+             else
+             {
+               nfile<-nrow(input$calfile1)
+               
+               csv=list()
+               
+               for(i in 1: nfile)
+               {
+                 csv[[i]]=read.csv(input$calfile1$datapath[i])
+                 csv[[i]][1:3]<-NULL
+               }
+               
+               return(unlist(csv)) # rbind the csv
+             }
+             
+           })
+           
+           
+           ras<- reactive({
+             
+             if (is.null(input$samplefile1))
+               return()
+             else
+             {
+               nfile<-nrow(input$samplefile1)
+               
+               csv=list()
+               
+               for(i in 1: nfile)
+               {
+                 csv[[i]]=read.csv(input$samplefile1$datapath[i])
+                 csv[[i]][1:2]<-NULL
+               }
+               
+               return(unlist(csv)) # rbind the csv
+             }
+             
+           })
+           
+           
+           md<<-reactive(
+             
+             mdi<-sampledata()$mdi
+             
+           )
+           
+           
+           
+           midsi<<-reactive(
+             if(standard1()==1){
+             sampledata()$mids
+             }else{
+               
+               sampledata()$mdi/sampledata()$mdi
+             } 
+          
+           )
+           
+           MT<<-reactive(
+             
+             length(sampledata()$mids)
+             
+           )
+           
+           MTT <- reactive({
+             
+             inFile <- input$samplefile1
+             if (is.null(input$samplefile1)){
+               return(NULL)
+             }else{
+               
+               
+               tmp=list()
+               
+               for(i in 1: nfile)
+               {
+                 tmp[[i]]=read.csv(input$samplefile1$datapath[i])
+                 
+               }
+               
+               tmp<-do.call(rbind,tmp)
+               
+               NR<<-ncol(tmp)-2# number of replicates for each calibrant
+               NT<-nrow(tmp)
+               
+               NTT<-NR*NT
+               
+             }
+           })
+           
+           exp<-reactive({
+             
+             if (is.null(input$samplefile1))
+               return()
+             else
+             {
+               nfile<-nrow(input$samplefile1)
+               
+               
+               exp=list()
+               
+               for(i in 1: nfile)
+               {
+                 nr= nrow(read.csv(input$samplefile1$datapath[i]))
+                 exp[[i]]<-(c(rep(1*i,each=nr)))
+                 exp[[i]]<-t(exp[[i]])
+               } 
+               
+               as.vector(do.call(cbind, exp))
+               
+             }
+             
+           })
+           
+           
+           expr<-reactive({
+             
+             if (is.null(input$samplefile1))
+               return()
+             else
+             {
+               nfile<<-nrow(input$samplefile1)
+               
+               
+               
+               expr=list()
+               
+               for(i in 1: nfile)
+               {
+                 nr<<-nrow(read.csv(input$samplefile1$datapath[i]))
+                 nrac<-ncol(read.csv(input$samplefile1$datapath[i]))-2
+                 n1<-nr*nrac
+                 expr[[i]]<-matrix(c(rep(1*i,each=n1)))
+                 
+               } 
+               
+               
+               as.vector(do.call(rbind, expr))
+               
+               
+             }
+             
+           })
+           
+           expr2<-reactive({
+             
+             if (is.null(input$samplefile1))
+               return()
+             else
+             {
+               nfile<-nrow(input$samplefile1)
+               
+               csv=list()
+               
+               k<-nrow(read.csv(input$samplefile1$datapath[1]))
+               nras<-ncol(read.csv(input$samplefile1$datapath[1]))-2
+               
+               
+               csv[[1]]=c(rep(1:k,nras))
+               
+               
+               for(i in 2: nfile)
+               {
+                 
+                 c=max(csv[[i-1]])+1
+                 x=nrow(read.csv(input$samplefile1$datapath[i]))
+                 y=c+x-1
+                 csv[[i]]=c(rep(c:y, nras))
+                 
+               }
+               
+               as.vector(unlist(csv))
+               
+               
+               
+             }
+             
+           })
+           
+           nfile<-reactive({
+             
+             if (!is.null(input$calfile1))
+             {
+               nfile<-nrow(input$calfile1)
+             }
+           })
+           
+           nrac<-reactive({
+             
+             if (!is.null(input$calfile1))
+             {
+               nrac<-ncol(read.csv(input$calfile1$datapath[1]))-3
+               
+             }
+           })
+           
+           vecwac <- reactive({
+             
+             if (!is.null(input$calfile1))
+             {
+               
+               vec=list()
+               for(i in 1: nfile){
+                 vec[[i]]<-nrow(read.csv(input$calfile1$datapath[i]))
+               }
+               return(vec)
+             }
+           })
+           
+           vecrac <- reactive({
+             
+             if (!is.null(input$calfile1))
+             {
+               
+               vecrac=list()
+               for(i in 1: nfile){
+                 vecrac[[i]]<-nrac()*nrow(read.csv(input$calfile1$datapath[i]))
+               }
+               return(vecrac)
+             }
+           })
+           
+           vecras <- reactive({
+             
+             if (!is.null(input$samplefile1))
+             {
+               
+               vecras=list()
+               for(i in 1: nfile){
+                 vecras[[i]]<-nrac()*nrow(read.csv(input$samplefile1$datapath[i]))
+               }
+               return(vecras)
+             }
+           })
+           
+           linedata<-list(umids=umids(),
+                          umads=umads(),
+                          wadm=wadm(),
+                          uwad=uwad(),
+                          NWS=NWS()+1,
+                          NS=NS(),
+                          NT=NT(),
+                          expc=expc(),
+                          midsm=midsm(),
+                          madsm=madsm(),
+                          wsol=wsol(), 
+                          NTT=NTT(), 
+                          expc1=expc1(),
+                          expc2=expc2(),
+                          rac=rac(),
+                          ras=ras(),
+                          MT=MT(),MTT=MTT(),
+                          exp=exp(),
+                          midsi=midsi(),
+                          md=md(),
+                          expr=expr(),
+                          expr2=expr2())
+           
+           
+           require(R2OpenBUGS)
+           # #   
+           # #   ##################################################################
+           # #   ##################################################################
+           # #   ### Define the model
+           # #   ##################################################################
+           # #   ##################################################################
+           # #   
+           # #   
+           linemodel<-function(){####this program uses NS number of input tables. 
+             ### NT is the total number of elements of midsm and madsm (total number of calibrants). 
+             ### expc gives the experiment designation for each element in midsm and madsm. NTT is the total number of measurements in the calibration experiment.
+             ### expc1 gives the experiment label for each observation in rac, expc2 gives calibrant designation for each rac.
+             ### MT gives the total number of samples, MTT gives the total number of observations in the quantitation experiment 
+             ### exp gives the experiment designation for each sample, expr gives the experiment designation for each element in ras, 
+             ### expr2 gives the sample designation for each element in ras.
+             
+             
+             for(i in 1:NWS){wadprec[i]<-1/(uwad[i]*uwad[i])
+             wad[i]~dnorm(wadm[i],wadprec[i])}
+             wadmean<-mean(wad[])
+             
+             for(i in 1:NS){midsprec[i]<-1/(umids[i]*umids[i])
+             madsprec[i]<-1/(umads[i]*umads[i])}
+             
+             
+             for(i in 1:NT){
+               mids[i]~dnorm(midsm[i],midsprec[expc[i]])
+               mads[i]~dnorm(madsm[i],madsprec[expc[i]])
+               ratio[i]<-mads[i]/mids[i] 
+               wac[i]<-wad[wsol[i]]* ratio[i] } 
+             
+             #######
+             #calibration equation
+             for(i in 1:NS){
+               
+               b[i]~dnorm(0,1.0E-5)
+               
+               xins[i]~dnorm(0,0.0016)%_%I(0.001,)
+               chsqns[i]~dgamma(0.5,0.5)
+               fitprec[i]<-xins[i]/sqrt(chsqns[i])
+               
+             }
+             
+             for(i in 1:NTT){mean[i]<-b[expc1[i]]*wac[expc2[i]]
+             rac[i]~dnorm(mean[i],fitprec[expc1[i]])
+             predm[i]~dnorm(mean[i],fitprec[expc1[i]])
+             
+             }
+             
+             
+             ###
+             # Compute the mass fraction wd
+             for(i in 1:NS){
+               
+               b.cut[i]<-cut(b[i])
+               xinsi[i]~dnorm(0,0.0016)%_%I(0.001,)
+               chsqnsi[i]~dgamma(0.5,0.5)
+               sigras[i]<-xinsi[i]/sqrt(chsqnsi[i])
+               
+               xinsw[i]~dnorm(0,0.0016)%_%I(0.001,)
+               chsqnsw[i]~dgamma(0.5,0.5)
+               wdsig[i]<-xinsw[i]/sqrt(chsqnsw[i])
+               wd[i]~dnorm(0,1.0E-5)}
+             
+             for(i in 1:MT){
+               wdm[i]~dnorm(wd[exp[i]],wdsig[exp[i]])
+               rasmean[i]<-b.cut[exp[i]]*wdm[i]*md[i]/midsi[i]
+               rasmeanp[i]~dnorm(rasmean[i],fitprec[exp[i]])}
+             
+             
+             
+             for(i in 1:MTT){
+               ras[i]~dnorm(rasmeanp[expr2[i]],sigras[expr[i]])
+               
+             } 
+             
+             # 
+             
+             #############################################
+             T~dcat(P[])
+             P[1:NS]~ddirich(alpha[])
+             for(i in 1:NS){alpha[i]<-1}
+             mumeanfin<-wd[T]
+             
+           }
+           
+           ##################################################################
+           ##################################################################
+           ### Run OpenBUGS
+           ##################################################################
+           ##################################################################
+           
+           withProgress(message = 'Running Bayes', style="old",value = 0, {
+             
+             lineinits<-function(){list(b=c(1,1),wd=c(0,0))}
+             
+             lineout<-bugs(data=linedata,
+                           inits=lineinits,
+                           parameters=c("wd","wdm","mumeanfin","wac","b","mean","predm"),   
+                           model.file=linemodel,
+                           n.iter = 10000, n.burnin = 5000, n.thin = 10,n.chains =1)#,debug=T)
+           })
+           
+           ###########################################
+           ### additional result generation
+           
+           attach.bugs(lineout) ## imports the random draws for the parameters
+           
+           
+           outregb<-data.frame(mean=lineout$mean$b,sd=lineout$sd$b)
+           outwdm<-data.frame(mean=lineout$mean$wdm,sd=lineout$sd$wdm)
+           outmean<-data.frame(mean=lineout$mean$mean)
+           outwd<-data.frame(mean=lineout$mean$wd,sd=lineout$sd$wd )
+           outmumeanfin<-data.frame(mean=lineout$mean$mumeanfin,sd=lineout$sd$mumeanfin )
+           
+           ########## sets up the data to plot the regression line and calculate the rsq
+           
+           require(data.table)
+           
+           
+           ############ calculates the rsq
+           
+           ybar<-split(outmean,rep(1:nfile,vecrac()))
+           rac_rsq<-split(rac(),rep(1:nfile,vecrac()))
+           
+           sst=list()
+           sse=list()
+           rsq=list()
+           for(i in 1: nfile)
+           {
+             sst[[i]]<-sum((rac_rsq[[i]]-mean(rac_rsq[[i]]))^2)
+             sse[[i]]<-sum((rac_rsq[[i]]-ybar[[i]])^2)
+             rsq[[i]]<-1-(sse[[i]]/sst[[i]])
+           }
+           
+           n_rsq<-unlist(rsq)
+           
+           
+           ####calibration plot ##
+           
+           ##get wac vectors
+           
+           outwac=lineout$mean$wac
+           
+           lwac<-split(outwac,rep(1:nfile,vecwac()))
+           
+           lwac<-lapply(lwac,rep,nrac())
+           
+           
+           lrac<-split(rac(),rep(1:nfile,vecrac()))
+           
+           cl=NULL
+           
+           length=length(lineout$mean$predm)
+           predm=lineout$sims.list$predm
+           for(i in 1:length){
+             cl[[i]]<-quantile(predm[,i],0.025)
+           }
+           
+           cl<-split(cl,rep(1:nfile,vecrac()))
+           
+           cu=NULL
+           for(i in 1:length){
+             cu[[i]]<-quantile(predm[,i],0.9995)
+           }
+           
+           cu<-split(cu,rep(1:nfile,vecrac()))
+           
+           
+           ###Regression output###
+           
+           
+           bayesres=lineout$sims.list$mumeanfin
+           
+           ##### download
+           bind1 <-list(wadm=input$wadm1,uwad=input$uwad1,
+                        u_mid=umids(),u_mad=input$u_mad1,
+                        u_mids=input$u_mids1,u_mdi=input$u_mdi1,
+                        coverage=input$coverage1,Number_iteration=input$niters1,Length_burnin=input$nburnin1,
+                        mean=mean(bayesres),sd=sd(bayesres),median=median(bayesres),
+                        rfactor=outregb )
+           
+           updateTabsetPanel(session = session, inputId = "results",selected = "Fit")
+           #waiter_hide()
+           
+           
+           return(list(mcmcout=bayesres,bind1=bind1,rsq=n_rsq, rac=lrac,wac=lwac,lineb=lineout$mean$b,outb=outregb,cl=cl,cu=cu))
+         
+         
+       }
+       
+       
+     }
+     # waiter_show(
+     #   spin_circle(),
+     #   color = "#87A96B",
+     #   "Just a moment ..."
+     #   
+     # )
     
-    ###
-    
-  })
-  
-  ##################################################################
-  ### Outputs of Bayesian analysis #################################
-  ##################################################################
-  
-  ## TODO: delete all outputs when anything is changed in inputs
-  
-  output$mu_est1 <- renderText({
-    bayesres1=outbayes1()[["mcmcout"]]
-    paste(format(mean(bayesres1),digits = input$digit1+2))
-  })
-  
-  
-  output$mu_se1 <- renderText({
-    bayesres1=outbayes1()[["mcmcout"]]
-    paste(format(sd(bayesres1),digits = input$digit1 ))
-  })
-  
-  output$mu_median1 <- renderText({
-    bayesres1=outbayes1()[["mcmcout"]]
-    paste(format(median(bayesres1),digits = input$digit1+2))
-  })
-  
-  
-  output$coverageProbabilityPercentBayes1 <- renderText({
-    paste(input$coverage1*100,"%",sep="")
-  })
-  
-  
-  output$mu_quant1 <- renderText({
-    bayesres1=outbayes1()[["mcmcout"]]
-    credible.interval=quantile(bayesres1,c((1-input$coverage1)/2, (1+input$coverage1)/2))
-    
-    paste(format(credible.interval[1],digits = input$digit1+2),"to",format(credible.interval[2]))
-  })
-  
-  
-  output$downloadbayesout1 <- downloadHandler(
-    filename = "analysis_inputs$estimates.csv",
-    content = function(file) {
-      write.csv(outbayes1()[["bind1"]], file, row.names = FALSE)
-    }
-  )
-  ####calibration plot
-  ###
-  observeEvent(input$analysis,{
-    
-    choice1<-reactive(
-      input$choice1
-    )
-    
-    if (choice1()==1){
-      
-      if (!is.null(input$calfile1))
-      {
-        
-        nfile<-nrow(input$calfile1)
-        
-        if(nfile==1){
-          
-          output$plots2 <- renderUI({
-            
-            output$plot3<-renderPlot({
-              plot(outbayes1()[["wac"]],outbayes1()[["rac"]],main = paste("Calibration Plot"),type="p",pch=19, col=c("forestgreen","tomato"),xlab="wac",ylab="rac")
-              lines(outbayes1()[["wac"]],outbayes1()[["cl"]],type="l",col="steelblue",lty="dashed")
-              lines(outbayes1()[["wac"]],outbayes1()[["cu"]],type="l",col="steelblue",lty="dashed")
-              abline(a=outbayes1()[["linea"]], b=outbayes1()[["lineb"]],col="red")
-            })
-            plotOutput("plot3")
-          })
-          ####test
-          # output$plot4<-renderPlot({
-          #   plot(outbayes1()[["wac"]],outbayes1()[["rac"]],main = paste("Calibration Plot"),type="p",pch=19, col=c("forestgreen","tomato"),xlab="wac",ylab="rac")
-          #   lines(outbayes1()[["wac"]],outbayes1()[["cl"]],type="l",col="steelblue",lty="dashed")
-          #   lines(outbayes1()[["wac"]],outbayes1()[["cu"]],type="l",col="steelblue",lty="dashed")
-          #   abline(a=outbayes1()[["linea"]], b=outbayes1()[["lineb"]],col="red")
-          # })
-          
-        }else{
-          
-          output$plots2 <- renderUI({
-            plot_output_list <- lapply(1:nfile, function(i) {
-              plotname <- paste("plot3", i, sep="")
-              plotOutput(plotname, height = 400, width = 600)
-            })
-            do.call(tagList, plot_output_list)
-          })
-          
-          lapply(1:nfile, function(i){
-            output[[paste("plot3", i, sep="") ]] <- renderPlot({
-              plot(outbayes1()[["wac"]][[i]],outbayes1()[["rac"]][[i]],main = paste("Calibration Plot", i),type="p",pch=19, col=c("forestgreen","tomato"),xlab="wac",ylab="rac")
-              lines(outbayes1()[["wac"]][[i]],outbayes1()[["cl"]][[i]],type="l",col="steelblue",lty="dashed")
-              lines(outbayes1()[["wac"]][[i]],outbayes1()[["cu"]][[i]],type="l",col="steelblue",lty="dashed")
-              abline(a=outbayes1()[["linea"]][[i]], b=outbayes1()[["lineb"]][[i]])
-            })
-          })
-        }
-      }
-    }else{
-      
-      if (!is.null(input$calfile1))
-      {
-        
-        nfile<-nrow(input$calfile1)
-        
-        if(nfile==1){
-          ymax=1.2*max(outbayes1()[["rac"]])
-          xmax=1.2*max(outbayes1()[["wac"]])
-          output$plots2 <- renderUI({
-            
-            output$plot3<-renderPlot({
-              plot(outbayes1()[["wac"]],outbayes1()[["rac"]],main = paste("Calibration Plot"),type="p",pch=19, col=c("forestgreen","tomato"),xlab="wac",ylab="rac",xlim=c(0,xmax),ylim=c(0,ymax))
-              abline(a=0, b=outbayes1()[["lineb"]],col="red")
-            })
-            plotOutput("plot3")
-          })
-          
-        }else{
-          
-          ymax=list()
-          xmax=list()
-          for(i in 1: nfile){
-            ymax[[i]]=1.2*max(outbayes1()[["rac"]][[i]])
-            xmax[[i]]=1.2*max(outbayes1()[["wac"]][[i]])
-          }
-          
-          output$plots2 <- renderUI({
-            plot_output_list <- lapply(1:nfile, function(i) {
-              
-              plotname <- paste("plot3", i, sep="")
-              plotOutput(plotname, height = 400, width = 600)
-            })
-            do.call(tagList, plot_output_list)
-          })
-          
-          lapply(1:nfile, function(i){
-            output[[paste("plot3", i, sep="") ]] <- renderPlot({
-              plot(outbayes1()[["wac"]][[i]],outbayes1()[["rac"]][[i]],main = paste("Calibration Plot", i),type="p",pch=19, col=c("forestgreen","tomato"),xlab="wac",ylab="rac",xlim=c(0,xmax[[i]]),ylim=c(0,ymax[[i]]))
-              abline(a=0, b=outbayes1()[["lineb"]][[i]],col="red")
-            })
-          })
-        }
-      }
-    }
-  })
-  ####
-  observeEvent(input$analysis,{
-    
-    choice1<-reactive(
-      input$choice1
-    )
-    
-    if (choice1()==1){
-      output$out2 = renderUI ({
-        
-        output$rsq1 <- renderTable({outbayes1()[["rsq"]]},striped = F,spacing = "m",align="c",digits = 5)
-        output$outrega1 <- renderTable({outbayes1()[["outa"]]},striped = F,spacing = "m",align="c",digits = 5)
-        output$outregb1 <- renderTable({outbayes1()[["outb"]]},striped = F,spacing = "m",align="c",digits = 5)
-        output$outhetp1 <- renderTable({outbayes1()[["hetp"]]},striped = F,spacing = "m",align="c",digits = 5)
-        tagList(
-          fluidRow(
-            column(4,
-                   p("R-squared: ",tableOutput("rsq1"))),
-            column(4,
-                   p("Intercept: ",tableOutput("outrega1"))),
-            column(4,
-                   p("Slope: ",tableOutput("outregb1")))),
-          fluidRow(
-            column(12,
-                   p("heterogeneity variance as % of total y variance",tableOutput("outhetp1"))
-            )),
-        )
-      })
-    }else{
-      output$out2 = renderUI ({
-        output$outregb1 <- renderTable({outbayes1()[["outb"]]},striped = F,spacing = "m",align="c",digits = 5)
-        fluidRow(
-          column(6,
-                 p("RF: ",tableOutput("outregb1"))
-          ))
-      })
-      
-    }
-    
-    
-  })
-  
-  bayesplot_func1=function(){
-    bayesres1=outbayes1()[["mcmcout"]]
-    #   
-    plot(density(bayesres1),col="violet",main="Posterior Distribution",xlab = "WD",lwd=3)
-    #   
-    z = density(bayesres1,n=4096)
-    #   
-    L = quantile(bayesres1, probs=(1-input$coverage1)/2)
-    U = quantile(bayesres1, probs=(1+input$coverage1)/2)
-    #   
-    iS = which.min(abs(z$x-L))
-    iE = which.min(abs(z$x-U))
-    #   
-    xp = c(L, U, z$x[iE:iS])
-    yp = c(0, 0, z$y[iE:iS])
-    #   
-    polygon(xp, yp, border=F, col="thistle1")
-    lines(z$x, z$y, type="l", col="violet", lwd=3)
-    #   
-    points(median(bayesres1),
-           min(z$y)+0.4*par()$cxy[2], pch=19, bg="Blue", col="slateblue4")
-    segments(L, 0, U, 0, lwd=2, col="slateblue4")
-    #   
-    
-  }
-  
-  output$mu_post_plot1 <- renderPlot({bayesplot_func1()})
-  
-  
-  output$download_mu_post_plot1 <- downloadHandler(
-    filename = function() { paste( 'mean_post.pdf', sep='') },
-    content = function(file) {
-      pdf(file,height=9, width=8)
-      bayesplot_func1()
-      dev.off()
-    })
-  
-  
-  ##################################################################
-  ##### Trace plot #################################################
-  ##################################################################
-  
-  
-  traceplot_func1=function(){
-    bayesres1=outbayes1()[["mcmcout"]]
-    
-    traceColors=rainbow(1)
-    plot(bayesres1,type="l",ylab = "WD")
-    
-    
-  }
-  
-  output$mu_trace_plot1 <- renderPlot({traceplot_func1()})
-  # 
-  output$download_mu_trace_plot1 <- downloadHandler(
-    filename = function() { paste( 'tracePlot.pdf', sep='') },
-    content = function(file) {
-      pdf(file,height=9, width=8)
-      traceplot_func1()
-      # dev.off()
-    })
-  
+   ###
+   
+   })
+   
+   ##################################################################
+   ### Outputs of Bayesian analysis #################################
+   ##################################################################
+   
+   ## TODO: delete all outputs when anything is changed in inputs
+   
+   output$mu_est1 <- renderText({
+     bayesres1=outbayes1()[["mcmcout"]]
+     paste(format(mean(bayesres1),digits = input$digit1+2))
+   })
+   
+   
+   output$mu_se1 <- renderText({
+     bayesres1=outbayes1()[["mcmcout"]]
+     paste(format(sd(bayesres1),digits = input$digit1 ))
+   })
+   
+   output$mu_median1 <- renderText({
+     bayesres1=outbayes1()[["mcmcout"]]
+     paste(format(median(bayesres1),digits = input$digit1+2))
+   })
+   
+   
+   output$coverageProbabilityPercentBayes1 <- renderText({
+     paste(input$coverage1*100,"%",sep="")
+   })
+   
+   
+   output$mu_quant1 <- renderText({
+     bayesres1=outbayes1()[["mcmcout"]]
+     credible.interval=quantile(bayesres1,c((1-input$coverage1)/2, (1+input$coverage1)/2))
+     
+     paste(format(credible.interval[1],digits = input$digit1+2),"to",format(credible.interval[2]))
+   })
+   
+   
+   output$downloadbayesout1 <- downloadHandler(
+     filename = "analysis_inputs$estimates.csv",
+     content = function(file) {
+       write.csv(outbayes1()[["bind1"]], file, row.names = FALSE)
+     }
+   )
+   ####calibration plot
+   ###
+   observeEvent(input$analysis,{
+     
+     choice1<-reactive(
+       input$choice1
+     )
+     
+     if (choice1()==1){
+       
+       if (!is.null(input$calfile1))
+       {
+         
+         nfile<-nrow(input$calfile1)
+         
+         if(nfile==1){
+           
+           output$plots2 <- renderUI({
+             
+             output$plot3<-renderPlot({
+               plot(outbayes1()[["wac"]],outbayes1()[["rac"]],main = paste("Calibration Plot"),type="p",pch=19, col=c("forestgreen","tomato"),xlab="wac",ylab="rac")
+               lines(outbayes1()[["wac"]],outbayes1()[["cl"]],type="l",col="steelblue",lty="dashed")
+               lines(outbayes1()[["wac"]],outbayes1()[["cu"]],type="l",col="steelblue",lty="dashed")
+               abline(a=outbayes1()[["linea"]], b=outbayes1()[["lineb"]],col="red")
+             })
+             plotOutput("plot3")
+           })
+           ####test
+           # output$plot4<-renderPlot({
+           #   plot(outbayes1()[["wac"]],outbayes1()[["rac"]],main = paste("Calibration Plot"),type="p",pch=19, col=c("forestgreen","tomato"),xlab="wac",ylab="rac")
+           #   lines(outbayes1()[["wac"]],outbayes1()[["cl"]],type="l",col="steelblue",lty="dashed")
+           #   lines(outbayes1()[["wac"]],outbayes1()[["cu"]],type="l",col="steelblue",lty="dashed")
+           #   abline(a=outbayes1()[["linea"]], b=outbayes1()[["lineb"]],col="red")
+           # })
+           
+         }else{
+           
+           output$plots2 <- renderUI({
+             plot_output_list <- lapply(1:nfile, function(i) {
+               plotname <- paste("plot3", i, sep="")
+               plotOutput(plotname, height = 400, width = 600)
+             })
+             do.call(tagList, plot_output_list)
+           })
+           
+           lapply(1:nfile, function(i){
+             output[[paste("plot3", i, sep="") ]] <- renderPlot({
+               plot(outbayes1()[["wac"]][[i]],outbayes1()[["rac"]][[i]],main = paste("Calibration Plot", i),type="p",pch=19, col=c("forestgreen","tomato"),xlab="wac",ylab="rac")
+               lines(outbayes1()[["wac"]][[i]],outbayes1()[["cl"]][[i]],type="l",col="steelblue",lty="dashed")
+               lines(outbayes1()[["wac"]][[i]],outbayes1()[["cu"]][[i]],type="l",col="steelblue",lty="dashed")
+               abline(a=outbayes1()[["linea"]][[i]], b=outbayes1()[["lineb"]][[i]])
+             })
+           })
+         }
+       }
+     }else{
+       
+       if (!is.null(input$calfile1))
+       {
+         
+         nfile<-nrow(input$calfile1)
+         
+         if(nfile==1){
+           ymax=1.2*max(outbayes1()[["rac"]])
+           xmax=1.2*max(outbayes1()[["wac"]])
+           output$plots2 <- renderUI({
+             
+             output$plot3<-renderPlot({
+               plot(outbayes1()[["wac"]],outbayes1()[["rac"]],main = paste("Calibration Plot"),type="p",pch=19, col=c("forestgreen","tomato"),xlab="wac",ylab="rac",xlim=c(0,xmax),ylim=c(0,ymax))
+               abline(a=0, b=outbayes1()[["lineb"]],col="red")
+             })
+             plotOutput("plot3")
+           })
+           
+         }else{
+           
+           ymax=list()
+           xmax=list()
+           for(i in 1: nfile){
+             ymax[[i]]=1.2*max(outbayes1()[["rac"]][[i]])
+             xmax[[i]]=1.2*max(outbayes1()[["wac"]][[i]])
+           }
+           
+           output$plots2 <- renderUI({
+             plot_output_list <- lapply(1:nfile, function(i) {
+               
+               plotname <- paste("plot3", i, sep="")
+               plotOutput(plotname, height = 400, width = 600)
+             })
+             do.call(tagList, plot_output_list)
+           })
+           
+           lapply(1:nfile, function(i){
+             output[[paste("plot3", i, sep="") ]] <- renderPlot({
+               plot(outbayes1()[["wac"]][[i]],outbayes1()[["rac"]][[i]],main = paste("Calibration Plot", i),type="p",pch=19, col=c("forestgreen","tomato"),xlab="wac",ylab="rac",xlim=c(0,xmax[[i]]),ylim=c(0,ymax[[i]]))
+               abline(a=0, b=outbayes1()[["lineb"]][[i]],col="red")
+             })
+           })
+         }
+       }
+     }
+   })
+   ####
+   observeEvent(input$analysis,{
+     
+     choice1<-reactive(
+       input$choice1
+     )
+     
+     if (choice1()==1){
+       output$out2 = renderUI ({
+         
+         output$rsq1 <- renderTable({outbayes1()[["rsq"]]},striped = F,spacing = "m",align="c",digits = 5)
+         output$outrega1 <- renderTable({outbayes1()[["outa"]]},striped = F,spacing = "m",align="c",digits = 5)
+         output$outregb1 <- renderTable({outbayes1()[["outb"]]},striped = F,spacing = "m",align="c",digits = 5)
+         output$outhetp1 <- renderTable({outbayes1()[["hetp"]]},striped = F,spacing = "m",align="c",digits = 5)
+         tagList(
+           fluidRow(
+             column(4,
+                    p("R-squared: ",tableOutput("rsq1"))),
+             column(4,
+                    p("Intercept: ",tableOutput("outrega1"))),
+             column(4,
+                    p("Slope: ",tableOutput("outregb1")))),
+           fluidRow(
+             column(12,
+                    p("heterogeneity variance as % of total y variance",tableOutput("outhetp1"))
+             )),
+         )
+       })
+     }else{
+       output$out2 = renderUI ({
+         output$outregb1 <- renderTable({outbayes1()[["outb"]]},striped = F,spacing = "m",align="c",digits = 5)
+         fluidRow(
+           column(6,
+                  p("RF: ",tableOutput("outregb1"))
+           ))
+       })
+       
+     }
+     
+     
+   })
+   
+   bayesplot_func1=function(){
+     bayesres1=outbayes1()[["mcmcout"]]
+     #   
+     plot(density(bayesres1),col="violet",main="Posterior Distribution",xlab = "WD",lwd=3)
+     #   
+     z = density(bayesres1,n=4096)
+     #   
+     L = quantile(bayesres1, probs=(1-input$coverage1)/2)
+     U = quantile(bayesres1, probs=(1+input$coverage1)/2)
+     #   
+     iS = which.min(abs(z$x-L))
+     iE = which.min(abs(z$x-U))
+     #   
+     xp = c(L, U, z$x[iE:iS])
+     yp = c(0, 0, z$y[iE:iS])
+     #   
+     polygon(xp, yp, border=F, col="thistle1")
+     lines(z$x, z$y, type="l", col="violet", lwd=3)
+     #   
+     points(median(bayesres1),
+            min(z$y)+0.4*par()$cxy[2], pch=19, bg="Blue", col="slateblue4")
+     segments(L, 0, U, 0, lwd=2, col="slateblue4")
+     #   
+     
+   }
+   
+   output$mu_post_plot1 <- renderPlot({bayesplot_func1()})
+   
+   
+   output$download_mu_post_plot1 <- downloadHandler(
+     filename = function() { paste( 'mean_post.pdf', sep='') },
+     content = function(file) {
+       pdf(file,height=9, width=8)
+       bayesplot_func1()
+       dev.off()
+     })
+   
+   
+   ##################################################################
+   ##### Trace plot #################################################
+   ##################################################################
+   
+   
+   traceplot_func1=function(){
+     bayesres1=outbayes1()[["mcmcout"]]
+     
+     traceColors=rainbow(1)
+     plot(bayesres1,type="l",ylab = "WD")
+     
+     
+   }
+   
+   output$mu_trace_plot1 <- renderPlot({traceplot_func1()})
+   # 
+   output$download_mu_trace_plot1 <- downloadHandler(
+     filename = function() { paste( 'tracePlot.pdf', sep='') },
+     content = function(file) {
+       pdf(file,height=9, width=8)
+       traceplot_func1()
+       # dev.off()
+     })
+   
   ### 
 })
