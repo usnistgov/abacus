@@ -5,7 +5,6 @@ library(shinycssloaders)
 library(rmarkdown)
 library('xlsx')
 source("./Toman2019-ExpDesignAug14.R")
-source("./plot.R") 
 shinyServer(function(input, output,session) {
   
 
