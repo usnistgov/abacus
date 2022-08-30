@@ -37,6 +37,8 @@ RUN Rscript -e 'install.packages("magic")'
 RUN Rscript -e 'install.packages("R2OpenBUGS")'
 RUN Rscript -e 'install.packages("rJava")'
 RUN Rscript -e 'install.packages("xlsx")'
+RUN Rscript -e 'install.packages("tinytex")'
+RUN Rscript -e 'tinytex::install_tinytex()'
 
 # delete default apps
 WORKDIR /srv/shiny-server
