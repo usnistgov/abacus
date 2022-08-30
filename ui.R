@@ -533,21 +533,25 @@ shinyUI(fluidPage(
           hr(),
           uiOutput("out1"),
           
-      
-          downloadButton('downloadbayesout', 'Download inputs and estimates'),
-          downloadButton('downloaddoeinput', 'Download DoE inputs'),
+        
+          downloadButton("report", "Generate PDF report"),
+         
+          #downloadButton('downloadbayesout', 'Download inputs and estimates(csv file)'),
+          #downloadButton('downloaddoeinput', 'Download DoE inputs (csv file)'),
           
           plotOutput("mu_post_plot", width = "auto", height = "600px"),
-          downloadButton('download_mu_post_plot', 'Download plot'),
+         # downloadButton('download_mu_post_plot', 'Download plot'),
           
           br(),
           br(),
           
           
           plotOutput("mu_trace_plot", width = "auto", height = "600px"),
-          downloadButton('download_mu_trace_plot', 'Download plot')
+         # downloadButton('download_mu_trace_plot', 'Download plot')
           
           )),
+      
+      
         
       "Design of Experiment",
       
