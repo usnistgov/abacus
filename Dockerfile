@@ -2,7 +2,7 @@
 FROM rocker/shiny:4.1.0
 
 ## update system libraries and install wget
-RUN sudo apt update
+RUN sudo apt update -y
 RUN sudo apt install -y wget
 RUN sudo apt install -y make
 RUN sudo apt install -y build-essential
@@ -26,8 +26,8 @@ RUN sudo R CMD javareconf
 #RUN sudo apt install -y r-cran-rjava
 
 # install latex
-RUN apt-get install texlive-latex-recommended texlive-fonts-recommended -y
-RUN apt-get install texlive-latex-extra -y
+RUN apt install texlive-latex-recommended texlive-fonts-recommended -y
+RUN apt install texlive-latex-extra -y
 
 # copy necessary files
 COPY ./ /srv/shiny-server/
