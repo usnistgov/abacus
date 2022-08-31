@@ -25,6 +25,9 @@ RUN sudo apt install -y default-jdk
 RUN sudo R CMD javareconf
 #RUN sudo apt install -y r-cran-rjava
 
+# install latex
+RUN apt-get install texlive-latex-recommended texlive-fonts-recommended -y
+RUN apt-get install texlive-latex-extra -y
 
 # copy necessary files
 COPY ./ /srv/shiny-server/
