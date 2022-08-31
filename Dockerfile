@@ -40,6 +40,7 @@ RUN Rscript -e 'install.packages("xlsx")'
 RUN Rscript -e 'install.packages("rmarkdown")'
 RUN Rscript -e 'install.packages("tinytex")'
 RUN Rscript -e 'tinytex::install_tinytex()'
+RUN Rscript -e 'install.packages("knitr")'
 
 # delete default apps
 WORKDIR /srv/shiny-server
