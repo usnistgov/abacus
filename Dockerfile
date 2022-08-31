@@ -2,12 +2,12 @@
 FROM rocker/shiny:4.1.0
 
 ## update system libraries and install wget
-RUN sudo apt update -y
-RUN sudo apt install -y wget
-RUN sudo apt install -y make
-RUN sudo apt install -y build-essential
-RUN sudo apt install -y gcc-multilib
-RUN sudo apt install -y systemctl
+RUN sudo apt-get update -y
+RUN sudo apt-get install -y wget
+RUN sudo apt-get install -y make
+RUN sudo apt-get install -y build-essential
+RUN sudo apt-get install -y gcc-multilib
+RUN sudo apt-get install -y systemctl
 
 # downlad, unpack, install openBugs
 RUN wget -P /tmp https://www.mrc-bsu.cam.ac.uk/wp-content/uploads/2018/04/OpenBUGS-3.2.3.tar.gz
@@ -19,15 +19,14 @@ RUN make install
 WORKDIR /
 
 # java files
-RUN sudo apt update
-RUN sudo apt install -y default-jre
-RUN sudo apt install -y default-jdk
+RUN sudo apt-get install -y default-jre
+RUN sudo apt-get install -y default-jdk
 RUN sudo R CMD javareconf
 #RUN sudo apt install -y r-cran-rjava
 
 # install latex
-RUN apt install texlive-latex-recommended texlive-fonts-recommended -y
-RUN apt install texlive-latex-extra -y
+RUN apt-get install texlive-latex-recommended texlive-fonts-recommended -y
+RUN apt-get install texlive-latex-extra -y
 
 # copy necessary files
 COPY ./ /srv/shiny-server/
