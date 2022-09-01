@@ -16,6 +16,17 @@ shinyUI(fluidPage(
     <html class="nist-footer-bottom">
     '),
   
+  tags$head(HTML("
+    <!-- Google tag (gtag.js) -->
+    <script async src='https://www.googletagmanager.com/gtag/js?id=G-1L2H9B3YCD'></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+    
+      gtag('config', 'G-1L2H9B3YCD');
+    </script>")),
+  
     tags$style("#mu_est {font-size:14px;
                color:steelblue;
                }"),
