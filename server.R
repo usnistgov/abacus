@@ -5884,7 +5884,7 @@ shinyServer(function(input, output,session) {
      if(input$analysis){     
        fluidRow(style='margin: 0px;',
                 column(12, 
-                 downloadButton('downloadbayesout1', 'Download Inputs and Estimates')))
+                 downloadButton('downloadbayesout1', 'Download PDF report')))
        }
      })
    output$anaui2 <- renderUI({
@@ -8464,10 +8464,32 @@ shinyServer(function(input, output,session) {
    })
    
    
+   # output$downloadbayesout1 <- downloadHandler(
+   #   filename = "analysis_inputs$estimates.csv",
+   #   content = function(file) {
+   #     write.csv(outbayes1()[["bind1"]], file, row.names = FALSE)
+   #   }
+   # )
+   # 
    output$downloadbayesout1 <- downloadHandler(
-     filename = "analysis_inputs$estimates.csv",
+     filename = "Analysis Report.pdf",
      content = function(file) {
-       write.csv(outbayes1()[["bind1"]], file, row.names = FALSE)
+       # Copy the report file to a temporary directory before processing it, in
+       # case we don't have write permissions to the current working dir (which
+       # can happen when deployed).
+       tempReport <- file.path(tempdir(), "report1.Rmd")
+       file.copy("report1.rmd", tempReport, overwrite = TRUE)
+       
+       # Set up parameters to pass to Rmd document
+       params <- list(bayes=outbayes1() )
+       
+       # Knit the document, passing in the `params` list, and eval it in a
+       # child of the global environment (this isolates the code in the document
+       # from the code in this app).
+       rmarkdown::render(tempReport, output_file = file,
+                         params = params,
+                         envir = new.env(parent = globalenv())
+       )
      }
    )
    ####calibration plot
