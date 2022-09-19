@@ -1,0 +1,81 @@
+---
+title: "**NIST ABACUS Chemical Analysis Package: Measurement Calibration**"
+author: "Analysis Module"
+date: "`r Sys.Date()`"
+output: pdf_document
+params:
+  bayes: NA
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+```
+
+**MODEL RESULTS**
+
+```{r,echo=FALSE,comment=NA,message=FALSE,results='asis'}
+hr()
+cat('  \n')
+cat('  \n')
+cat('1. The posterior mean:\n',round(mean(params$bayes[["mcmcout"]]),5))
+cat('  \n')
+  cat( 'The standard uncertainty:\n',round(sd(params$bayes[["mcmcout"]]),5))
+cat('  \n')
+  cat( 'The posterior median:\n',round(median(params$bayes[["mcmcout"]]),5))
+credible.interval1=quantile(params$bayes[["mcmcout"]],0.025)
+credible.interval2=quantile(params$bayes[["mcmcout"]],0.975)
+cat('  \n')
+cat('The 95% credible interval ranges from:\n', round(credible.interval1,5),'to',round(credible.interval2,5))
+
+cat('  \n')
+cat('  \n')
+cat('2. R-squared:\n',round(params$bayes[["rsq"]],5),' . ','Intercept:\n','mean=',round(params$bayes[["outa"]][["mean"]],5),',','sd= ',round(params$bayes[["outa"]][["sd"]],5),'.','Slope:\n','mean=',round(params$bayes[["outb"]][["mean"]],5),',','sd= ',round(params$bayes[["outb"]][["sd"]],5))
+cat('  \n')
+cat('  \n')
+cat('3. Heterogeneity variance as % of total y variance:\n',round(params$bayes[["hetp"]][["mean"]],5))
+cat('  \n')
+cat('  \n')
+```
+
+
+
+```{r pressure, comment=NA,message=FALSE,results='asis',echo=FALSE}
+plot(params$bayes[["wac"]],params$bayes[["rac"]],main = paste("Calibration Plot"),pch=19, col=c("forestgreen","tomato"),xlab="Wac",ylab="Rac")
+
+text(params$bayes[["wac"]], params$bayes[["rac"]], paste(round(params$bayes[["wac"]], 2), round(params$bayes[["rac"]], 2), sep=", "), cex=0.8)
+
+lines(params$bayes[["wac"]],params$bayes[["cl"]],type="l",col="steelblue",lty="dashed")
+lines(params$bayes[["wac"]],params$bayes[["cu"]],type="l",col="steelblue",lty="dashed")
+abline(a=params$bayes[["linea"]], b=params$bayes[["lineb"]],col="red")
+
+
+
+plot(density(params$bayes[["mcmcout"]]),col="violet",main="Posterior Distribution",xlab = "WD",lwd=3)
+z = density(params$bayes[["mcmcout"]],n=4096)
+L = quantile(params$bayes[["mcmcout"]], probs=0.025)
+U = quantile(params$bayes[["mcmcout"]], probs=0.975)
+iS = which.min(abs(z$x-L))
+iE = which.min(abs(z$x-U))
+xp = c(L, U, z$x[iE:iS])
+yp = c(0, 0, z$y[iE:iS])
+polygon(xp, yp, border=F, col="thistle1")
+points(median(params$bayes[["mcmcout"]]),
+           min(z$y)+0.4*par()$cxy[2], pch=19, bg="Blue", col="slateblue4")
+    segments(L, 0, U, 0, lwd=2, col="slateblue4")
+lines(z$x, z$y, type="l", col="violet", lwd=3)
+
+##trace plot
+traceColors=rainbow(1)
+plot(params$bayes[["mcmcout"]],main="Traceplot",type="l",ylab = "WD")
+plot(density(params$bayes[["mcmcout"]]),col="violet",main="Posterior Distribution",xlab = "WD",lwd=3)
+    #
+  
+```
+ 
+ 
+ 
+ 
+ 
+
