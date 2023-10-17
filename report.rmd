@@ -5,6 +5,7 @@ date: "`r Sys.Date()`"
 output: pdf_document
 params:
   bayes: NA
+  condition: NULL
 ---
 
 ```{r setup, include=FALSE}
@@ -19,7 +20,7 @@ knitr::opts_chunk$set(echo = TRUE)
 hr()
 cat('  \n')
 cat('  \n')
-cat('1. The posterior mean:\n',round(mean(params$bayes[["mcmcout"]]),5))
+cat(' The posterior mean:\n',round(mean(params$bayes[["mcmcout"]]),5))
 cat('  \n')
   cat( 'The standard uncertainty:\n',round(sd(params$bayes[["mcmcout"]]),5))
 cat('  \n')
@@ -31,44 +32,115 @@ cat('The 95% credible interval ranges from:\n', round(credible.interval1,5),'to'
 
 cat('  \n')
 cat('  \n')
-cat('2. R-squared:\n',round(params$bayes[["rsq"]],5),' . ','Intercept:\n','mean=',round(params$bayes[["outa"]][["mean"]],5),',','sd= ',round(params$bayes[["outa"]][["sd"]],5),'.','Slope:\n','mean=',round(params$bayes[["outb"]][["mean"]],5),',','sd= ',round(params$bayes[["outb"]][["sd"]],5))      
+
+
+if (params$condition == "LR") {
+  
+  cat('  \n')
+  cat('  \n')
+  cat('R-squared:\n',round(params$bayes[["rsq"]],5),' . ','Intercept:\n','mean=',round(params$bayes[["outa"]][["mean"]],5),',','sd= ',round(params$bayes[["outa"]][["sd"]],5),'.','Slope:\n','mean=',round(params$bayes[["outb"]][["mean"]],5),',','sd= ',round(params$bayes[["outb"]][["sd"]],5))      
+  cat('  \n')
+  cat('  \n')
+} else if (params$condition == "RF") 
+{
+  cat('Respond Factor: \n', 'mean=',round(params$bayes[["outb"]][["mean"]],5),',','sd= ',round(params$bayes[["outb"]][["sd"]],5))
+  cat('  \n')
+  cat('  \n')
+}
+cat('The estimated parameters for the design of experiment(the 95% credible interval):')
 cat('  \n')
+
+xnew_vals <- params$bayes[["xnew"]]
+       cat('-The expected approximate value of the measurand, quantity of A:',              paste(round(xnew_vals, 5), collapse=", "), "\n")
+       
 cat('  \n')
-cat('3. The expected approximate value of the measurand,quantity of A:', round(params$bayes[["xnew"]],5))
+betal_vals <- params$bayes[["betal"]]
+betau_vals <- params$bayes[["betau"]]
+
+cat('-The Slope of calibration line: min', paste0('c(', paste(round(betal_vals, 5), collapse=", "), ')'), ', max', paste0('c(', paste(round(betau_vals, 5), collapse=", "), ')'), "\n")
+
 cat('  \n')
+
+waca_vals <- params$bayes[["waca"]]
+wacb_vals <- params$bayes[["wacb"]]
+
+cat('-Target calibration region;x-axis range in terms of concentrations of A:I in the calibration solutions:', 'min', paste0('c(', paste(round(waca_vals, 5), collapse=", "), ')'), ', max', paste0('c(', paste(round(wacb_vals, 5), collapse=", "), ')'), "\n")
+
 cat('  \n')
-cat('4. The estimated parameters for the design of experiment(the 95% credible interval):')
+
+vyl_vals <- params$bayes[["vyl"]]
+vyu_vals <- params$bayes[["vyu"]]
+
+cat('-Expected standard deviation of peak area ratios (A:I) from a calibration solution; (uy):\n', 'min', paste0('c(', paste(round(vyl_vals, 5), collapse=", "), ')'), ', max', paste0('c(', paste(round(vyu_vals, 5), collapse=", "), ')'), "\n")
+
 cat('  \n')
-cat('-The expected approximate value of the measurand,quantity of A:', round(params$bayes[["xnew"]],5))
-cat('  \n')
-cat('-The Slope of calibration line:', 'min',round(params$bayes[["betal"]],5),',','max',round(params$bayes[["betau"]],5))
-cat('  \n')
-cat('-Target calibration region;x-axis range in terms of concentrations of A:I in the calibration solutions:', 'min',round(params$bayes[["waca"]],5),',','max',round(params$bayes[["wacb"]],5))
-cat('  \n')
-cat('-Expected standard deviation of peak area ratios (A:I) from a calibration solution; (uy):\n', 'min',round(params$bayes[["vyl"]],5),',','max',round(params$bayes[["vyu"]],5))
-cat('  \n')
+
 cat('-Expected standard uncertainty of the concentration ratios of A:I in the calibration experiment; (ux):\n', 'user input')
 cat('  \n')
-cat('-Expected relative standard uncertainty of the concentration of I in samples measured for the quantitation experiment; (ui):\n', 'min',round(params$bayes[["vil"]],5),',','max',round(params$bayes[["viu"]],5))
+
+vil_vals <- params$bayes[["vil"]]
+viu_vals <- params$bayes[["viu"]]
+cat('-Expected relative standard uncertainty of the concentration of I in samples measured for the quantitation experiment; (ui):\n', 
+    'min ', 
+    paste0('c(', paste(round(vil_vals, 5), collapse=", "), ')'), 
+    ', max ', 
+    paste0('c(', paste(round(viu_vals, 5), collapse=", "), ')'), 
+    "\n\n")
+
 cat('  \n')
-cat('-Expected relative standard uncertainty of the concentration ratios of A:I in the calibration experiment (rux):\n', 'min',round(params$bayes[["etal"]],5),',','max',round(params$bayes[["etau"]],5))
+
+
+etal_vals <- params$bayes[["etal"]]
+etau_vals <- params$bayes[["etau"]]
+cat('-Expected relative standard uncertainty of the concentration ratios of A:I in the calibration experiment (rux):\n', 
+    'min ', 
+    paste0('c(', paste(round(etal_vals, 5), collapse=", "), ')'), 
+    ', max ', 
+    paste0('c(', paste(round(etau_vals, 5), collapse=", "), ')'), 
+    "\n\n")
+
 cat('  \n')
-cat('-Expected between-sample variability (standard deviation) of peak area ratios (A:I) from the quantitation experiment(us):\n', 'min',round(params$bayes[["vsl"]],5),',','max',round(params$bayes[["vsu"]],5))
+
+# For vsl and vsu
+vsl_vals <- params$bayes[["vsl"]]
+vsu_vals <- params$bayes[["vsu"]]
+cat('-Expected between-sample variability (standard deviation) of peak area ratios (A:I) from the quantitation experiment(us):\n', 
+    'min ', 
+    paste0('c(', paste(round(vsl_vals, 5), collapse=", "), ')'), 
+    ', max ', 
+    paste0('c(', paste(round(vsu_vals, 5), collapse=", "), ')'), 
+    "\n\n")
+
 cat('  \n')
-```
+
+# Extract data length.
+ nfile <- length(params$bayes[["wac"]])
+# 
+if (nfile == 1) {
+  # Single plot
+  plot(params$bayes[["wac"]], params$bayes[["rac"]], main = "Calibration Plot", pch=19, col=c("forestgreen", "tomato"), xlab="Wac", ylab="Rac")
+  
+  text(params$bayes[["wac"]], params$bayes[["rac"]], paste(round(params$bayes[["wac"]], 2), round(params$bayes[["rac"]], 2), sep=", "), cex=0.8)
+  
+  lines(params$bayes[["wac"]], params$bayes[["cl"]], type="l", col="steelblue", lty="dashed")
+  lines(params$bayes[["wac"]], params$bayes[["cu"]], type="l", col="steelblue", lty="dashed")
+  
+  abline(a=params$bayes[["linea"]], b=params$bayes[["lineb"]], col="red")
+# 
+#
+}else {
+  
+  
+}
+
+cat('  \n')
+
+cat('  \n')
 
 
 
-```{r pressure, comment=NA,message=FALSE,results='asis',echo=FALSE}
-plot(params$bayes[["wac"]],params$bayes[["rac"]],main = paste("Calibration Plot"),pch=19, col=c("forestgreen","tomato"),xlab="Wac",ylab="Rac")
+cat('  \n')
 
-text(params$bayes[["wac"]], params$bayes[["rac"]], paste(round(params$bayes[["wac"]], 2), round(params$bayes[["rac"]], 2), sep=", "), cex=0.8)
-
-lines(params$bayes[["wac"]],params$bayes[["cl"]],type="l",col="steelblue",lty="dashed")
-lines(params$bayes[["wac"]],params$bayes[["cu"]],type="l",col="steelblue",lty="dashed")
-abline(a=params$bayes[["linea"]], b=params$bayes[["lineb"]],col="red")
-
-        
 
 plot(density(params$bayes[["mcmcout"]]),col="violet",main="Posterior Distribution",xlab = "WD",lwd=3)
 z = density(params$bayes[["mcmcout"]],n=4096)
@@ -84,12 +156,13 @@ points(median(params$bayes[["mcmcout"]]),
     segments(L, 0, U, 0, lwd=2, col="slateblue4")
 lines(z$x, z$y, type="l", col="violet", lwd=3)
 
+
 ##trace plot
 traceColors=rainbow(1)
 plot(params$bayes[["mcmcout"]],main="Traceplot",type="l",ylab = "WD")
 #plot(density(params$bayes[["mcmcout"]]),col="violet",main="Posterior Distribution",xlab = "WD",lwd=3)
-    #   
-  
+#   
+
 ```
  
  
