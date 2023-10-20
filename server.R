@@ -4643,8 +4643,8 @@ shinyServer(function(input, output,session) {
   output$report <- downloadHandler(
     filename = "report.pdf",
     content = function(file) {
-      tempReport <- file.path(tempdir(), "report.Rmd")
-      file.copy("report.Rmd", tempReport, overwrite = TRUE)
+      tempReport <- file.path(tempdir(), "report.rmd")
+      file.copy("report.rmd", tempReport, overwrite = TRUE)
       
       condition <- ifelse(input$choice == 1, "LR", "RF")
       
@@ -8363,7 +8363,7 @@ shinyServer(function(input, output,session) {
      filename = "Analysis Report.pdf",
      content = function(file) {
       
-       tempReport <- file.path(tempdir(), "report1.Rmd")
+       tempReport <- file.path(tempdir(), "report1.rmd")
        file.copy("report1.rmd", tempReport, overwrite = TRUE)
        
        condition <- ifelse(input$choice1 == 1, "LR", "RF")
