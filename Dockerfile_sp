@@ -1,0 +1,49 @@
+# Base image https://hub.docker.com/u/rocker/
+FROM openanalytics/r-ver:4.3.3
+
+## update system libraries and install wget
+RUN apt-get update -y
+RUN apt-get install -y wget
+RUN apt-get install -y make
+RUN apt-get install -y build-essential
+RUN apt-get install -y gcc-multilib
+RUN apt-get install -y systemctl
+
+# copy over files (including openbugs)
+RUN mkdir /app
+COPY . /app
+
+# unpack, install openBugs
+RUN tar -zxvf /app/OpenBUGS-3.2.3.tar.gz
+WORKDIR /OpenBUGS-3.2.3
+RUN ./configure
+RUN make
+RUN make install
+WORKDIR /
+
+# java files
+RUN apt-get install -y default-jre
+RUN apt-get install -y default-jdk
+RUN R CMD javareconf
+#RUN sudo apt install -y r-cran-rjava
+
+# install latex
+RUN apt-get install texlive-latex-recommended texlive-fonts-recommended -y
+RUN apt-get install texlive-latex-extra -y
+
+# install packages
+RUN Rscript -e 'install.packages("shinycssloaders")'
+RUN Rscript -e 'install.packages("shinyBS")'
+RUN Rscript -e 'install.packages("Matrix")'
+RUN Rscript -e 'install.packages("magic")'
+RUN Rscript -e 'install.packages("R2OpenBUGS")'
+RUN Rscript -e 'install.packages("rJava")'
+RUN Rscript -e 'install.packages("xlsx")'
+RUN Rscript -e 'install.packages("rmarkdown")'
+RUN Rscript -e 'install.packages("tinytex")'
+RUN Rscript -e 'tinytex::install_tinytex(force=TRUE)'
+RUN Rscript -e 'install.packages("knitr")'
+
+EXPOSE 3838
+
+CMD ["R", "-q", "-e", "shiny::runApp('/app',port=3838,host='0.0.0.0')"]
