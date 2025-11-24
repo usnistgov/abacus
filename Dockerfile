@@ -10,7 +10,7 @@ RUN sudo apt-get install -y gcc-multilib
 RUN sudo apt-get install -y systemctl
 
 # downlad, unpack, install openBugs
-RUN wget -P /tmp https://www.mrc-bsu.cam.ac.uk/wp-content/uploads/2018/04/OpenBUGS-3.2.3.tar.gz
+RUN wget -P /tmp https://web.archive.org/web/20230611171942/https://www.mrc-bsu.cam.ac.uk/wp-content/uploads/2018/04/OpenBUGS-3.2.3.tar.gz
 RUN tar zxvf tmp/OpenBUGS-3.2.3.tar.gz
 WORKDIR /OpenBUGS-3.2.3
 RUN ./configure
